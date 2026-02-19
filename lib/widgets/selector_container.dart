@@ -42,6 +42,7 @@ class _SelectorContainerState extends State<SelectorContainer> {
       onTap: () {
         selectorHandler.handleWidgetPress(widgetKey: widget.selectorKey);
       },
+
       child: Container(
         decoration: selected ? themeHandler.theme.value.selectorDecoration : null,
         child: Stack(

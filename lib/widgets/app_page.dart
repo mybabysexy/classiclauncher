@@ -39,7 +39,9 @@ class _AppPageState extends State<AppPage> {
     final top = row * (boxHeight + rowSpace);
     final left = col * (boxWidth + columnSpace);
 
-    return Positioned(
+    return AnimatedPositioned(
+      key: ValueKey("AnimatedPositioned::$runtimeType::${NavGroup.appGrid.name}_${app.packageName}"),
+      duration: Duration(milliseconds: 250),
       top: top,
       left: left,
       child: SelectorContainer(

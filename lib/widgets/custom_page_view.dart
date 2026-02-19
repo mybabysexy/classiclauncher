@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import '../models/enums.dart';
 
 // CustomPageView unchanged except removing currentPage prop and reading from handler
-class CustomPageView extends StatefulWidget {
+class CustomPage extends StatefulWidget {
   final List<Widget> children;
   final double width;
   final double height;
@@ -15,7 +15,7 @@ class CustomPageView extends StatefulWidget {
   final ValueNotifier<Direction?> directionNotifier;
   final int currentPage;
 
-  const CustomPageView({
+  const CustomPage({
     super.key,
     required this.children,
     required this.width,
@@ -26,10 +26,10 @@ class CustomPageView extends StatefulWidget {
   });
 
   @override
-  State<CustomPageView> createState() => _CustomPageViewState();
+  State<CustomPage> createState() => _CustomPageState();
 }
 
-class _CustomPageViewState extends State<CustomPageView> {
+class _CustomPageState extends State<CustomPage> {
   final SelectorHandler selectorHandler = Get.find<SelectorHandler>();
   late final Animation<double> scaleAnimation;
 
@@ -62,9 +62,9 @@ class _CustomPageViewState extends State<CustomPageView> {
                     top: 0,
                     width: widget.width,
                     height: widget.height,
-                    child: FadeTransition(
-                      opacity: widget.controller,
-                      child: ScaleTransition(scale: scaleAnimation, child: next),
+                    child: Opacity(
+                      opacity: widget.controller.value,
+                      child: Transform.scale(scale: scaleAnimation.value, child: next),
                     ),
                   ),
                 if (previous != null)
@@ -73,9 +73,9 @@ class _CustomPageViewState extends State<CustomPageView> {
                     top: 0,
                     width: widget.width,
                     height: widget.height,
-                    child: FadeTransition(
-                      opacity: widget.controller,
-                      child: Transform.scale(scale: 1.0 - ((1 - t) * 0.02), child: previous),
+                    child: Opacity(
+                      opacity: widget.controller.value,
+                      child: Transform.scale(scale: scaleAnimation.value, child: previous),
                     ),
                   ),
                 Positioned(
@@ -94,17 +94,17 @@ class _CustomPageViewState extends State<CustomPageView> {
   }
 }
 
-class PageGestureWrapper extends StatefulWidget {
+class CustomPageView extends StatefulWidget {
   final BoxConstraints constraints;
   final List<Widget> children;
 
-  const PageGestureWrapper({super.key, required this.constraints, required this.children});
+  const CustomPageView({super.key, required this.constraints, required this.children});
 
   @override
-  State<PageGestureWrapper> createState() => _PageGestureWrapperState();
+  State<CustomPageView> createState() => _CustomPageViewState();
 }
 
-class _PageGestureWrapperState extends State<PageGestureWrapper> with SingleTickerProviderStateMixin {
+class _CustomPageViewState extends State<CustomPageView> with SingleTickerProviderStateMixin {
   final SelectorHandler selectorHandler = Get.find<SelectorHandler>();
   late AnimationController controller;
   final ValueNotifier<Direction?> direction = ValueNotifier(null);
@@ -142,6 +142,18 @@ class _PageGestureWrapperState extends State<PageGestureWrapper> with SingleTick
       if (newPage == currentPage) {
         return;
       }
+
+      if (newPage > widget.children.length - 1) {
+        selectorHandler.appGridPage.value = widget.children.length - 1;
+        return;
+      }
+
+      if (newPage < 0) {
+        selectorHandler.appGridPage.value = 0;
+
+        return;
+      }
+
       if (newPage > currentPage) {
         direction.value = Direction.left;
       }
@@ -159,7 +171,7 @@ class _PageGestureWrapperState extends State<PageGestureWrapper> with SingleTick
   }
 
   @override
-  void didUpdateWidget(PageGestureWrapper old) {
+  void didUpdateWidget(CustomPageView old) {
     super.didUpdateWidget(old);
     if (widget.children != old.children) {
       children = widget.children.map((c) => RepaintBoundary(child: c)).toList();
@@ -204,7 +216,7 @@ class _PageGestureWrapperState extends State<PageGestureWrapper> with SingleTick
           controller.animateTo(0, duration: Duration(milliseconds: 200));
         }
       },
-      child: CustomPageView(
+      child: CustomPage(
         width: widget.constraints.maxWidth,
         height: widget.constraints.maxHeight,
         directionNotifier: direction,

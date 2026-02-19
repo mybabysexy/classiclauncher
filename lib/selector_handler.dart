@@ -1,18 +1,29 @@
+import 'dart:async';
+
 import 'package:classiclauncher/app_handler.dart';
+import 'package:classiclauncher/models/app_info.dart';
 import 'package:classiclauncher/models/enums.dart';
 import 'package:classiclauncher/models/key_press.dart';
 import 'package:classiclauncher/theme_handler.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class SelectorHandler extends GetxController {
   final ThemeHandler themeHandler = Get.find<ThemeHandler>();
   final AppHandler appHandler = Get.find<AppHandler>();
+  final RxBool editing = RxBool(false);
+  final Rx<AppInfo?> moving = Rx(null);
 
   Rx<NavGroup?> selectedNavGroup = Rx(null);
   RxInt selectedIndex = 0.obs;
   RxInt appGridPage = 0.obs;
+  Rx<Timer?> pageChangeEdgeTimer = Rx(null);
+
+  Rx<double?> fingerX = Rx(null);
+  Rx<double?> fingerY = Rx(null);
+
+  int? appMoveCol;
+  int? appMoveRow;
 
   static const EventChannel eventChannel = EventChannel('com.noaisu.classicLauncher/input');
 
@@ -36,11 +47,15 @@ class SelectorHandler extends GetxController {
   void _updateKey() {
     selectedKey.value = '${selectedNavGroup.value?.name}_${selectedIndex.value}';
     if (selectedNavGroup.value != null) {
-      HapticFeedback.lightImpact();
-      SystemSound.play(SystemSoundType.click);
+      doFeedback();
     }
 
     print("selectkey = ${selectedKey.value}");
+  }
+
+  void doFeedback() {
+    HapticFeedback.lightImpact();
+    SystemSound.play(SystemSoundType.click);
   }
 
   Duration frameTime = Duration(milliseconds: 45);
@@ -95,9 +110,11 @@ class SelectorHandler extends GetxController {
 
     switch (navGroup) {
       case NavGroup.appGrid:
+        doFeedback();
         appHandler.launchApp(appHandler.installedApps[index]);
         break;
       case NavGroup.navBar:
+        doFeedback();
         if (index == 0) {
           appHandler.launchMail();
         }
