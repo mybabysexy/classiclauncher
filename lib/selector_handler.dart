@@ -1,25 +1,18 @@
 import 'package:classiclauncher/app_handler.dart';
+import 'package:classiclauncher/models/enums.dart';
 import 'package:classiclauncher/models/key_press.dart';
 import 'package:classiclauncher/theme_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-enum NavGroup { appGrid, navBar }
-
-enum Edge { top, left, right, bottom }
-
-enum MoveType { soft, hard }
-
-enum Direction { up, down, left, right }
-
 class SelectorHandler extends GetxController {
   final ThemeHandler themeHandler = Get.find<ThemeHandler>();
   final AppHandler appHandler = Get.find<AppHandler>();
 
   Rx<NavGroup?> selectedNavGroup = Rx(null);
-  RxInt selectedIndex = 0.obs; // index within current zone
-  final PageController pageController = PageController();
+  RxInt selectedIndex = 0.obs;
+  RxInt appGridPage = 0.obs;
 
   static const EventChannel eventChannel = EventChannel('com.noaisu.classicLauncher/input');
 
@@ -42,6 +35,10 @@ class SelectorHandler extends GetxController {
 
   void _updateKey() {
     selectedKey.value = '${selectedNavGroup.value?.name}_${selectedIndex.value}';
+    if (selectedNavGroup.value != null) {
+      HapticFeedback.lightImpact();
+      SystemSound.play(SystemSoundType.click);
+    }
 
     print("selectkey = ${selectedKey.value}");
   }
@@ -114,7 +111,12 @@ class SelectorHandler extends GetxController {
   void triggerMove(KeyPress keyPress, MoveType moveType) {
     if (selectedNavGroup.value == null) {
       selectedNavGroup.value = NavGroup.appGrid;
-      selectedIndex.value = 0;
+      selectedIndex.value = appsPerPage * appGridPage.value;
+      return;
+    }
+
+    if (selectedNavGroup.value == NavGroup.appGrid && selectedIndex.value < appsPerPage * appGridPage.value) {
+      selectedIndex.value = appsPerPage * appGridPage.value;
       return;
     }
 
@@ -156,13 +158,14 @@ class SelectorHandler extends GetxController {
     required int maxItems,
     required NavGroup navGroup,
   }) {
-    final int localIndex = selectedIndex.value % (columnCount * rowCount);
-    final int currentRow = localIndex ~/ columnCount;
-    final int currentCol = localIndex % columnCount;
-    final int pageSize = columnCount * rowCount;
-    final int currentPage = selectedIndex.value ~/ pageSize;
-    final int nextPageStart = (currentPage + 1) * pageSize;
-    final int prevPageStart = (currentPage - 1) * pageSize;
+    int localIndex = selectedIndex.value % (columnCount * rowCount);
+    int currentRow = localIndex ~/ columnCount;
+    int currentCol = localIndex % columnCount;
+    int pageSize = columnCount * rowCount;
+    int currentPage = selectedIndex.value ~/ pageSize;
+    int nextPageStart = (currentPage + 1) * pageSize;
+    int prevPageStart = (currentPage - 1) * pageSize;
+    int maxPage = ((maxItems / pageSize).round() - 1);
 
     bool isRightEdge = currentCol == columnCount - 1;
     bool isTopEdge = currentRow == 0;
@@ -182,7 +185,9 @@ class SelectorHandler extends GetxController {
 
         if (hasTopSibling && isTopEdge) {
           selectedNavGroup.value = NavGroup.values[navGroupIndex - 1];
-          selectedIndex.value = lastApp;
+
+          selectedIndex.value = (lastApp % appsPerPage) + (appsPerPage * appGridPage.value);
+
           print("at up moving to widget above");
           return;
         }
@@ -206,8 +211,11 @@ class SelectorHandler extends GetxController {
         break;
 
       case Direction.left:
+        if (isLeftEdge && currentPage == 0) {
+          return;
+        }
         // Lock to grid if slow
-        if (isLeftEdge && (moveType == MoveType.soft || currentPage == 0)) {
+        if (isLeftEdge && moveType == MoveType.soft) {
           return;
         }
         // Move to prev page same row if hard
@@ -223,9 +231,13 @@ class SelectorHandler extends GetxController {
         break;
       case Direction.right:
         // Lock to grid if slow
+        if (isRightEdge && maxPage == currentPage) {
+          return;
+        }
         if (isRightEdge && moveType == MoveType.soft) {
           return;
         }
+
         // Move to next page same row if fast
         if (isRightEdge && moveType == MoveType.hard) {
           selectedIndex.value = nextPageStart + (currentRow * columnCount);
@@ -241,9 +253,10 @@ class SelectorHandler extends GetxController {
 
   void _scrollToIndex(int index) async {
     animatingPage = true;
+
     int page = index ~/ appsPerPage;
 
-    await pageController.animateToPage(page, duration: Duration(milliseconds: 200), curve: Curves.easeInOut);
+    appGridPage.value = page;
     animatingPage = false;
   }
 }

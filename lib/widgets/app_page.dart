@@ -2,13 +2,12 @@ import 'dart:math' as math;
 
 import 'package:classiclauncher/app_handler.dart';
 import 'package:classiclauncher/models/app_info.dart';
+import 'package:classiclauncher/models/enums.dart';
 import 'package:classiclauncher/theme_handler.dart';
 import 'package:classiclauncher/widgets/app_card.dart';
 import 'package:classiclauncher/widgets/selector_container.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import '../selector_handler.dart';
 
 class AppPage extends StatefulWidget {
   final double width;

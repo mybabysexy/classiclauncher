@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:classiclauncher/models/app_info.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -8,6 +9,7 @@ class AppHandler extends GetxController {
   static const MethodChannel methodChannel = MethodChannel('com.noaisu.classicLauncher/app');
   RxList<AppInfo> installedApps = RxList();
   Rx<Uint8List?> wallpaper = Rx(null);
+  Rx<AppInfo?> loliSnatcher = Rx(null);
 
   Timer? _timer;
 
@@ -15,14 +17,14 @@ class AppHandler extends GetxController {
   void onInit() {
     super.onInit();
     getAppList();
-    // slop change this later
-    _timer = Timer.periodic(Duration(seconds: 60), (_) {
+    _timer = Timer.periodic(Duration(seconds: 30), (_) {
       getAppList();
     });
   }
 
   Future<void> getAppList() async {
     List<AppInfo> apps = [];
+    AppInfo? loliSnatcherInfo;
     try {
       List<dynamic>? results = await methodChannel.invokeMethod<List<dynamic>>('getApps');
 
@@ -45,12 +47,13 @@ class AppHandler extends GetxController {
 
         apps.add(AppInfo(packageName: packageName, title: title, icon: icon));
 
-        if (packageName.contains("blackberry")) {
-          print("bb found $packageName");
+        if (packageName.contains("loliSnatcher")) {
+          loliSnatcherInfo = apps.last;
         }
       }
 
-      if (apps.isNotEmpty) {
+      if (apps.isNotEmpty && !listEquals(apps, installedApps)) {
+        loliSnatcher.value = loliSnatcherInfo;
         installedApps.value = apps;
       }
     } on PlatformException catch (e, stackTrace) {
@@ -67,6 +70,10 @@ class AppHandler extends GetxController {
   }
 
   Future<void> launchMail() async {
+    if (loliSnatcher.value != null) {
+      return launchApp(loliSnatcher.value!);
+    }
+
     AppInfo? bbHub = installedApps.firstWhereOrNull((app) => app.packageName == "com.blackberry.hub");
 
     if (bbHub != null) {

@@ -7,11 +7,14 @@ import 'package:classiclauncher/theme_handler.dart';
 import 'package:classiclauncher/utils/constants.dart';
 import 'package:classiclauncher/widgets/app_card.dart';
 import 'package:classiclauncher/widgets/app_page.dart';
+import 'package:classiclauncher/widgets/custom_page_view.dart';
 import 'package:classiclauncher/widgets/page_indicator.dart';
 import 'package:classiclauncher/widgets/selector_container.dart';
 import 'package:classiclauncher/widgets/shadowed_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
+import 'models/enums.dart';
 
 void main() {
   Get.put(AppHandler(), permanent: true);
@@ -69,12 +72,16 @@ class _MyHomePageState extends State<MyHomePage> {
               Expanded(
                 child: LayoutBuilder(
                   builder: (BuildContext context, BoxConstraints constraints) {
-                    return PageView(
+                    return PageGestureWrapper(
+                      constraints: constraints,
+                      children: [for (int i = 0; i < pageCount; i++) AppPage(width: constraints.maxWidth, height: constraints.maxHeight, page: i)],
+                    );
+                    /*   return PageView(
                       scrollDirection: Axis.horizontal,
                       physics: ClampingScrollPhysics(),
                       controller: selectorHandler.pageController,
                       children: [for (int i = 0; i < pageCount; i++) AppPage(width: constraints.maxWidth, height: constraints.maxHeight, page: i)],
-                    );
+                    ); */
                   },
                 ),
               ),
@@ -83,21 +90,23 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Padding(
-                      padding: EdgeInsetsGeometry.only(left: themeHandler.theme.value.navBarSpacing, right: themeHandler.theme.value.navBarSpacing),
-                      child: SelectorContainer(
-                        selectorKey: "${NavGroup.navBar.name}_0",
-                        child: SizedBox(
-                          height: themeHandler.theme.value.navBarHeight,
-                          width: themeHandler.theme.value.navBarHeight,
-                          child: ShadowedImage(
-                            width: themeHandler.theme.value.navBarIconSize,
-                            height: themeHandler.theme.value.navBarIconSize,
-                            assetPath: iconMessages,
+                    Obx(() {
+                      return Padding(
+                        padding: EdgeInsetsGeometry.only(left: themeHandler.theme.value.navBarSpacing, right: themeHandler.theme.value.navBarSpacing),
+                        child: SelectorContainer(
+                          selectorKey: "${NavGroup.navBar.name}_0",
+                          child: SizedBox(
+                            height: themeHandler.theme.value.navBarHeight,
+                            width: themeHandler.theme.value.navBarHeight,
+                            child: ShadowedImage(
+                              width: themeHandler.theme.value.navBarIconSize,
+                              height: themeHandler.theme.value.navBarIconSize,
+                              assetPath: appHandler.loliSnatcher.value == null ? iconMessages : iconKanna2,
+                            ),
                           ),
                         ),
-                      ),
-                    ),
+                      );
+                    }),
                     Expanded(
                       child: SelectorContainer(
                         selectorKey: "${NavGroup.navBar.name}_1",
@@ -106,7 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: [PageIndicators(controller: selectorHandler.pageController, pageCount: pageCount)],
+                            children: [Obx(() => PageIndicators(selected: selectorHandler.appGridPage.value, pageCount: pageCount))],
                           ),
                         ),
                       ),

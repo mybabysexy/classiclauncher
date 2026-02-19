@@ -24,6 +24,7 @@ class _AppCardState extends State<AppCard> {
   Widget build(BuildContext context) {
     return Obx(
       () => SizedBox(
+        key: ValueKey("AppCard::${widget.appInfo..packageName}::${widget.width}::${widget.height}"),
         width: widget.width,
         height: widget.height,
         child: Column(

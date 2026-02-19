@@ -20,6 +20,7 @@ class _ShadowedImageState extends State<ShadowedImage> {
     if (widget.assetPath == null && widget.imageBytes == null) {
       return SizedBox(height: widget.height, width: widget.width);
     }
+
     return SizedBox(
       height: widget.height,
       width: widget.width,
@@ -37,8 +38,8 @@ class _ShadowedImageState extends State<ShadowedImage> {
                   height: widget.height + 2,
                   width: widget.width,
                   child: widget.imageBytes == null
-                      ? Image(image: AssetImage(widget.assetPath!), fit: BoxFit.contain)
-                      : Image.memory(widget.imageBytes!, fit: BoxFit.contain),
+                      ? Image(image: AssetImage(widget.assetPath!), fit: BoxFit.contain, gaplessPlayback: true)
+                      : Image.memory(widget.imageBytes!, fit: BoxFit.contain, gaplessPlayback: true),
                 ),
               ),
             ),
@@ -48,8 +49,8 @@ class _ShadowedImageState extends State<ShadowedImage> {
             height: widget.height - 4,
             width: widget.width - 4,
             child: widget.imageBytes == null
-                ? Image(image: AssetImage(widget.assetPath!), fit: BoxFit.contain)
-                : Image.memory(widget.imageBytes!, fit: BoxFit.contain),
+                ? Image(image: AssetImage(widget.assetPath!), fit: BoxFit.contain, gaplessPlayback: true)
+                : Image.memory(widget.imageBytes!, fit: BoxFit.contain, gaplessPlayback: true),
           ),
         ],
       ),

@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class PageIndicators extends StatefulWidget {
-  final PageController controller;
   final int pageCount;
+  final int selected;
 
-  const PageIndicators({super.key, required this.controller, required this.pageCount});
+  const PageIndicators({super.key, required this.selected, required this.pageCount});
 
   @override
   State<PageIndicators> createState() => _PageIndicatorsState();
@@ -14,28 +14,6 @@ class PageIndicators extends StatefulWidget {
 
 class _PageIndicatorsState extends State<PageIndicators> {
   ThemeHandler themeHandler = Get.find<ThemeHandler>();
-  int selectedPage = 0;
-  @override
-  void initState() {
-    widget.controller.addListener(() {
-      if (!mounted) {
-        return;
-      }
-
-      double? newPage = widget.controller.page;
-
-      if (newPage == null) {
-        return;
-      }
-
-      if (newPage.round() != selectedPage) {
-        setState(() {
-          selectedPage = newPage.round();
-        });
-      }
-    });
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +22,7 @@ class _PageIndicatorsState extends State<PageIndicators> {
         for (int i = 0; i < widget.pageCount; i++)
           Padding(
             padding: EdgeInsets.only(right: i == widget.pageCount - 1 ? 0 : themeHandler.theme.value.pageIndicatorSpacing),
-            child: PageIndicator(key: ValueKey("PageIndicators::$i"), pageNumber: i, selected: i == selectedPage),
+            child: PageIndicator(key: ValueKey("PageIndicators::$i"), pageNumber: i, selected: i == widget.selected),
           ),
       ],
     );

@@ -1,0 +1,218 @@
+import 'package:classiclauncher/widgets/app_page.dart';
+import 'package:classiclauncher/selector_handler.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:get/get.dart';
+
+import '../models/enums.dart';
+
+// CustomPageView unchanged except removing currentPage prop and reading from handler
+class CustomPageView extends StatefulWidget {
+  final List<Widget> children;
+  final double width;
+  final double height;
+  final AnimationController controller;
+  final ValueNotifier<Direction?> directionNotifier;
+  final int currentPage;
+
+  const CustomPageView({
+    super.key,
+    required this.children,
+    required this.width,
+    required this.height,
+    required this.controller,
+    required this.directionNotifier,
+    required this.currentPage,
+  });
+
+  @override
+  State<CustomPageView> createState() => _CustomPageViewState();
+}
+
+class _CustomPageViewState extends State<CustomPageView> {
+  final SelectorHandler selectorHandler = Get.find<SelectorHandler>();
+  late final Animation<double> scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    scaleAnimation = Tween<double>(begin: 0.98, end: 1.0).animate(widget.controller);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.children.isEmpty) return SizedBox.shrink();
+    Widget current = widget.children[widget.currentPage];
+    Widget? next = widget.currentPage + 1 < widget.children.length ? widget.children[widget.currentPage + 1] : null;
+    Widget? previous = widget.currentPage - 1 >= 0 ? widget.children[widget.currentPage - 1] : null;
+    return SizedBox(
+      width: widget.width,
+      height: widget.height,
+      child: ValueListenableBuilder<Direction?>(
+        valueListenable: widget.directionNotifier,
+        builder: (context, direction, _) => AnimatedBuilder(
+          animation: widget.controller,
+          builder: (_, __) {
+            double t = widget.controller.value;
+            return Stack(
+              children: [
+                if (next != null)
+                  Positioned(
+                    left: direction == Direction.left ? widget.width - (t * widget.width) - ((1 - t) * (widget.width * 0.3)) : widget.width * 2,
+                    top: 0,
+                    width: widget.width,
+                    height: widget.height,
+                    child: FadeTransition(
+                      opacity: widget.controller,
+                      child: ScaleTransition(scale: scaleAnimation, child: next),
+                    ),
+                  ),
+                if (previous != null)
+                  Positioned(
+                    right: direction == Direction.right ? widget.width - (t * widget.width) - ((1 - t) * (widget.width * 0.3)) : -widget.width,
+                    top: 0,
+                    width: widget.width,
+                    height: widget.height,
+                    child: FadeTransition(
+                      opacity: widget.controller,
+                      child: Transform.scale(scale: 1.0 - ((1 - t) * 0.02), child: previous),
+                    ),
+                  ),
+                Positioned(
+                  left: direction == Direction.left ? -(t * widget.width) : t * widget.width,
+                  top: 0,
+                  width: widget.width,
+                  height: widget.height,
+                  child: current,
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class PageGestureWrapper extends StatefulWidget {
+  final BoxConstraints constraints;
+  final List<Widget> children;
+
+  const PageGestureWrapper({super.key, required this.constraints, required this.children});
+
+  @override
+  State<PageGestureWrapper> createState() => _PageGestureWrapperState();
+}
+
+class _PageGestureWrapperState extends State<PageGestureWrapper> with SingleTickerProviderStateMixin {
+  final SelectorHandler selectorHandler = Get.find<SelectorHandler>();
+  late AnimationController controller;
+  final ValueNotifier<Direction?> direction = ValueNotifier(null);
+  late List<Widget> children;
+
+  int currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    currentPage = selectorHandler.appGridPage.value;
+    children = widget.children.map((c) => RepaintBoundary(child: c)).toList();
+
+    controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 300), lowerBound: 0, upperBound: 1.0);
+
+    controller.addListener(() {
+      if (controller.isCompleted && controller.value == 1) {
+        if (direction.value == Direction.left && currentPage < children.length - 1) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            setPage(currentPage + 1);
+            controller.reset();
+          });
+        } else if (direction.value == Direction.right && currentPage > 0) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            setPage(currentPage - 1);
+            controller.reset();
+          });
+        }
+      }
+    });
+
+    selectorHandler.appGridPage.listen((newPage) {
+      if (newPage == currentPage) {
+        return;
+      }
+      if (newPage > currentPage) {
+        direction.value = Direction.left;
+      }
+      if (newPage < currentPage) {
+        direction.value = Direction.right;
+      }
+
+      controller.animateTo(1, duration: Duration(milliseconds: 150));
+    });
+  }
+
+  void setPage(int page) {
+    selectorHandler.appGridPage.value = page;
+    setState(() => currentPage = page);
+  }
+
+  @override
+  void didUpdateWidget(PageGestureWrapper old) {
+    super.didUpdateWidget(old);
+    if (widget.children != old.children) {
+      children = widget.children.map((c) => RepaintBoundary(child: c)).toList();
+    }
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final maxWidth = widget.constraints.maxWidth;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragStart: (_) => direction.value = null,
+      onHorizontalDragUpdate: (details) {
+        if (direction.value == null) {
+          direction.value = details.delta.dx < 0 ? Direction.left : Direction.right;
+        }
+        if (direction.value == Direction.right) {
+          controller.value += details.delta.dx / maxWidth;
+        } else {
+          controller.value -= details.delta.dx / maxWidth;
+        }
+      },
+      onHorizontalDragEnd: (_) {
+        if (currentPage == 0 && direction.value == Direction.right) {
+          controller.animateTo(0, duration: Duration(milliseconds: 300));
+          return;
+        }
+        if (currentPage == children.length - 1 && direction.value == Direction.left) {
+          controller.animateTo(0, duration: Duration(milliseconds: 300));
+          return;
+        }
+        if (controller.value > 0.5) {
+          controller.animateTo(1, duration: Duration(milliseconds: 200));
+        } else {
+          controller.animateTo(0, duration: Duration(milliseconds: 200));
+        }
+      },
+      child: CustomPageView(
+        width: widget.constraints.maxWidth,
+        height: widget.constraints.maxHeight,
+        directionNotifier: direction,
+        controller: controller,
+        currentPage: currentPage,
+
+        children: children,
+      ),
+    );
+  }
+}
