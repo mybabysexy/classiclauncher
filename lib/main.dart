@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:classiclauncher/app_handler.dart';
+import 'package:classiclauncher/handlers/app_handler.dart';
+import 'package:classiclauncher/handlers/config_handler.dart';
 import 'package:classiclauncher/models/app_info.dart';
-import 'package:classiclauncher/selector_handler.dart';
-import 'package:classiclauncher/theme_handler.dart';
+import 'package:classiclauncher/handlers/selector_handler.dart';
+import 'package:classiclauncher/handlers/theme_handler.dart';
 import 'package:classiclauncher/utils/constants.dart';
-import 'package:classiclauncher/widgets/app_card.dart';
 import 'package:classiclauncher/widgets/app_drag_overlay.dart';
 import 'package:classiclauncher/widgets/app_page.dart';
 import 'package:classiclauncher/widgets/custom_page_view.dart';
@@ -19,6 +19,7 @@ import 'package:get/get.dart';
 import 'models/enums.dart';
 
 void main() {
+  Get.put(ConfigHandler(), permanent: true);
   Get.put(AppHandler(), permanent: true);
   Get.put(ThemeHandler(), permanent: true);
   Get.put(SelectorHandler(), permanent: true);
@@ -74,6 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
               Expanded(
                 child: LayoutBuilder(
                   builder: (BuildContext context, BoxConstraints constraints) {
+                    List<Widget> pages = [for (int i = 0; i < pageCount; i++) AppPage(width: constraints.maxWidth, height: constraints.maxHeight, page: i)];
                     return Listener(
                       behavior: HitTestBehavior.translucent,
 
@@ -82,65 +84,51 @@ class _MyHomePageState extends State<MyHomePage> {
                         selectorHandler.fingerY.value = null;
                       },
                       onPointerDown: (PointerDownEvent event) {
-                        print("Global position x:${event.position.dx}, y:${event.position.dy}");
-
-                        print("Relative position: x:${event.localPosition.dx}, y:${event.localPosition.dy}");
                         selectorHandler.fingerX.value = event.localPosition.dx;
                         selectorHandler.fingerY.value = event.localPosition.dy;
                       },
                       onPointerMove: (event) {
+                        double zoneWidth = themeHandler.theme.value.appGridEdgeHoverZoneWidth;
+
                         selectorHandler.fingerX.value = event.localPosition.dx;
                         selectorHandler.fingerY.value = event.localPosition.dy;
 
-                        if (event.localPosition.dx < 70 || event.localPosition.dx > (constraints.maxWidth - 70)) {
+                        if (event.localPosition.dx < zoneWidth || event.localPosition.dx > (constraints.maxWidth - zoneWidth)) {
                           if (selectorHandler.pageChangeEdgeTimer.value != null) {
                             return;
                           }
-                          selectorHandler.pageChangeEdgeTimer.value = Timer(Duration(seconds: 3), () {
+                          selectorHandler.pageChangeEdgeTimer.value = Timer(themeHandler.theme.value.appGridEdgeHoverDuration, () {
                             if (selectorHandler.fingerX.value == null) {
-                              selectorHandler.pageChangeEdgeTimer.value!.cancel();
-                              selectorHandler.pageChangeEdgeTimer.value = null;
+                              selectorHandler.clearTimer();
                               return;
                             }
 
-                            int page = selectorHandler.appGridPage.value;
-
-                            if (selectorHandler.fingerX.value! < 70) {
-                              print("going to prev page");
+                            if (selectorHandler.fingerX.value! < zoneWidth) {
                               selectorHandler.appGridPage.value--;
                             }
 
-                            if (selectorHandler.fingerX.value! > (constraints.maxWidth - 70)) {
-                              print("goingg to nextr page");
+                            if (selectorHandler.fingerX.value! > (constraints.maxWidth - zoneWidth)) {
                               selectorHandler.appGridPage.value++;
                             }
 
                             selectorHandler.pageChangeEdgeTimer.value = null;
                           });
                         } else if (selectorHandler.pageChangeEdgeTimer.value != null) {
-                          selectorHandler.pageChangeEdgeTimer.value!.cancel();
-                          selectorHandler.pageChangeEdgeTimer.value = null;
+                          selectorHandler.clearTimer();
                         }
                       },
                       child: Stack(
                         children: [
                           AppDragOverlay(width: constraints.maxWidth, height: constraints.maxHeight),
-                          IgnorePointer(
-                            ignoring: selectorHandler.editing.value,
-                            child: CustomPageView(
-                              constraints: constraints,
-                              children: [for (int i = 0; i < pageCount; i++) AppPage(width: constraints.maxWidth, height: constraints.maxHeight, page: i)],
+                          Obx(
+                            () => IgnorePointer(
+                              ignoring: selectorHandler.editing.value,
+                              child: CustomPageView(constraints: constraints, children: pages),
                             ),
                           ),
                         ],
                       ),
                     );
-                    /*   return PageView(
-                      scrollDirection: Axis.horizontal,
-                      physics: ClampingScrollPhysics(),
-                      controller: selectorHandler.pageController,
-                      children: [for (int i = 0; i < pageCount; i++) AppPage(width: constraints.maxWidth, height: constraints.maxHeight, page: i)],
-                    ); */
                   },
                 ),
               ),

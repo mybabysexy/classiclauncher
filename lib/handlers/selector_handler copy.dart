@@ -1,6 +1,6 @@
-import 'package:classiclauncher/app_handler.dart';
+import 'package:classiclauncher/handlers/app_handler.dart';
 import 'package:classiclauncher/models/key_press.dart';
-import 'package:classiclauncher/theme_handler.dart';
+import 'package:classiclauncher/handlers/theme_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';

@@ -1,10 +1,11 @@
 import 'dart:async';
 
-import 'package:classiclauncher/app_handler.dart';
+import 'package:classiclauncher/handlers/app_handler.dart';
 import 'package:classiclauncher/models/app_info.dart';
 import 'package:classiclauncher/models/enums.dart';
 import 'package:classiclauncher/models/key_press.dart';
-import 'package:classiclauncher/theme_handler.dart';
+import 'package:classiclauncher/handlers/theme_handler.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -27,10 +28,10 @@ class SelectorHandler extends GetxController {
 
   static const EventChannel eventChannel = EventChannel('com.noaisu.classicLauncher/input');
 
-  int get columns => themeHandler.theme.value.columns;
-  int get rows => themeHandler.theme.value.rows;
-  int get appsPerPage => columns * rows;
-  int get appCount => appHandler.installedApps.length;
+  int get _columns => themeHandler.theme.value.columns;
+  int get _rows => themeHandler.theme.value.rows;
+  int get _appsPerPage => themeHandler.theme.value.appsPerPage;
+  int get _appCount => appHandler.installedApps.length;
   int lastApp = 0;
 
   Rx<String?> selectedKey = Rx(null);
@@ -45,12 +46,21 @@ class SelectorHandler extends GetxController {
   }
 
   void _updateKey() {
+    print("oldkey = ${selectedKey.value}");
     selectedKey.value = '${selectedNavGroup.value?.name}_${selectedIndex.value}';
     if (selectedNavGroup.value != null) {
       doFeedback();
     }
+    if (moving.value != null && editing.value) {
+      appHandler.moveApp(appPosition: selectedIndex.value, app: moving.value!);
+    }
 
     print("selectkey = ${selectedKey.value}");
+  }
+
+  void clearTimer() {
+    pageChangeEdgeTimer.value?.cancel();
+    pageChangeEdgeTimer.value = null;
   }
 
   void doFeedback() {
@@ -59,7 +69,6 @@ class SelectorHandler extends GetxController {
   }
 
   Duration frameTime = Duration(milliseconds: 45);
-
   DateTime? lastMove;
   List<KeyPress> inputsSinceLastFrame = [];
   bool animatingPage = false;
@@ -82,15 +91,55 @@ class SelectorHandler extends GetxController {
     inputsSinceLastFrame = [];
   }
 
+  RxMap<Input, Timer> heldInputs = RxMap();
+  List<Input> cancelRelease = [];
+
   void handleKeyPress(KeyPress keyPress) {
-    if (keyPress.state != KeyState.keyUp) {
-      return;
-    }
-    if (keyPress.isTrackPadDirection) {
+    if (keyPress.isTrackPadDirection && keyPress.state == KeyState.keyUp) {
       handleDirection(keyPress);
     }
 
-    if (keyPress.keyCode == 66) {
+    if (keyPress.state == KeyState.keyDown) {
+      print("press started");
+      heldInputs.putIfAbsent(
+        Input.select,
+        () => Timer(themeHandler.theme.value.longPressActionDuration, () {
+          if (editing.value) {
+            print("long press detected while editing returning");
+            return;
+          }
+          print("long press detected");
+          cancelRelease.add(Input.select);
+          heldInputs[Input.select]!.cancel();
+          heldInputs.remove(Input.select);
+          if (selectedNavGroup.value == NavGroup.appGrid) {
+            editing.value = true;
+            moving.value = appHandler.installedApps[selectedIndex.value];
+          }
+        }),
+      );
+    }
+
+    if (keyPress.keyCode == 66 && keyPress.state == KeyState.keyUp && heldInputs.containsKey(Input.select)) {
+      heldInputs[Input.select]!.cancel();
+      heldInputs.remove(Input.select);
+
+      print("press ended");
+    }
+
+    if (keyPress.keyCode == 66 && keyPress.state == KeyState.keyUp && cancelRelease.contains(Input.select)) {
+      cancelRelease.remove(Input.select);
+      print("release cancelled");
+      return;
+    }
+
+    if (keyPress.keyCode == 66 && keyPress.state == KeyState.keyUp && editing.value) {
+      editing.value = false;
+      moving.value = null;
+      return;
+    }
+
+    if (keyPress.keyCode == 66 && keyPress.state == KeyState.keyUp) {
       handleWidgetPress();
     }
   }
@@ -128,12 +177,12 @@ class SelectorHandler extends GetxController {
   void triggerMove(KeyPress keyPress, MoveType moveType) {
     if (selectedNavGroup.value == null) {
       selectedNavGroup.value = NavGroup.appGrid;
-      selectedIndex.value = appsPerPage * appGridPage.value;
+      selectedIndex.value = _appsPerPage * appGridPage.value;
       return;
     }
 
-    if (selectedNavGroup.value == NavGroup.appGrid && selectedIndex.value < appsPerPage * appGridPage.value) {
-      selectedIndex.value = appsPerPage * appGridPage.value;
+    if (selectedNavGroup.value == NavGroup.appGrid && selectedIndex.value < _appsPerPage * appGridPage.value) {
+      selectedIndex.value = _appsPerPage * appGridPage.value;
       return;
     }
 
@@ -161,7 +210,7 @@ class SelectorHandler extends GetxController {
     print("$moveType in direction: $direction");
 
     if (selectedNavGroup.value == NavGroup.appGrid) {
-      doGridMove(direction: direction, moveType: moveType, columnCount: columns, rowCount: rows, maxItems: appCount, navGroup: NavGroup.appGrid);
+      doGridMove(direction: direction, moveType: moveType, columnCount: _columns, rowCount: _rows, maxItems: _appCount, navGroup: NavGroup.appGrid);
     } else {
       doGridMove(direction: direction, moveType: moveType, columnCount: 3, rowCount: 1, maxItems: 3, navGroup: NavGroup.navBar);
     }
@@ -203,7 +252,7 @@ class SelectorHandler extends GetxController {
         if (hasTopSibling && isTopEdge) {
           selectedNavGroup.value = NavGroup.values[navGroupIndex - 1];
 
-          selectedIndex.value = (lastApp % appsPerPage) + (appsPerPage * appGridPage.value);
+          selectedIndex.value = (lastApp % _appsPerPage) + (_appsPerPage * appGridPage.value);
 
           print("at up moving to widget above");
           return;
@@ -215,7 +264,7 @@ class SelectorHandler extends GetxController {
           return;
         }
 
-        if (isBottomEdge && hasBottomSibling) {
+        if (isBottomEdge && hasBottomSibling && !editing.value) {
           selectedNavGroup.value = selectedNavGroup.value = NavGroup.values[navGroupIndex + 1];
           lastApp = selectedIndex.value;
           selectedIndex.value = 0;
@@ -271,7 +320,7 @@ class SelectorHandler extends GetxController {
   void _scrollToIndex(int index) async {
     animatingPage = true;
 
-    int page = index ~/ appsPerPage;
+    int page = index ~/ _appsPerPage;
 
     appGridPage.value = page;
     animatingPage = false;

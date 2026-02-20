@@ -1,5 +1,8 @@
-import 'package:classiclauncher/selector_handler.dart';
-import 'package:classiclauncher/theme_handler.dart';
+import 'dart:async';
+
+import 'package:classiclauncher/handlers/selector_handler.dart';
+import 'package:classiclauncher/handlers/theme_handler.dart';
+import 'package:classiclauncher/models/enums.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -16,6 +19,7 @@ class _SelectorContainerState extends State<SelectorContainer> {
   final ThemeHandler themeHandler = Get.find<ThemeHandler>();
   final SelectorHandler selectorHandler = Get.find<SelectorHandler>();
   bool selected = false;
+  bool buttonPressed = false;
 
   @override
   void initState() {
@@ -34,6 +38,23 @@ class _SelectorContainerState extends State<SelectorContainer> {
         });
       }
     });
+
+    ever(selectorHandler.heldInputs, (Map<Input, Timer> inputMap) {
+      if (!mounted) {
+        return;
+      }
+      bool newButtonPressed = selectorHandler.heldInputs.containsKey(Input.select);
+      if (newButtonPressed != buttonPressed) {
+        setState(() {
+          buttonPressed = newButtonPressed;
+        });
+      }
+    });
+  }
+
+  Color getHoldColour(Color colour) {
+    Color whiter = Color.lerp(colour, Colors.white, 0.1)!;
+    return whiter.withValues(alpha: (colour.a * 0.8));
   }
 
   @override
@@ -44,10 +65,15 @@ class _SelectorContainerState extends State<SelectorContainer> {
       },
 
       child: Container(
-        decoration: selected ? themeHandler.theme.value.selectorDecoration : null,
+        decoration: selected
+            ? buttonPressed
+                  ? themeHandler.theme.value.selectorDecoration.copyWith(color: getHoldColour(themeHandler.theme.value.selectorDecoration.color!))
+                  : themeHandler.theme.value.selectorDecoration
+            : null,
         child: Stack(
           children: [
-            widget.child,
+            Align(alignment: Alignment.center, child: widget.child),
+
             // Text(widget.selectorKey.split("_")[1], style: TextStyle(fontSize: 20)),
           ],
         ),

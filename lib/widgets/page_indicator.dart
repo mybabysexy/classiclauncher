@@ -1,4 +1,4 @@
-import 'package:classiclauncher/theme_handler.dart';
+import 'package:classiclauncher/handlers/theme_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

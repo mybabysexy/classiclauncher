@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:classiclauncher/handlers/config_handler.dart';
 import 'package:classiclauncher/models/app_info.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +16,7 @@ class AppHandler extends GetxController {
   Rx<Uint8List?> wallpaper = Rx(null);
   Rx<AppInfo?> loliSnatcher = Rx(null);
   RxBool writingAppList = false.obs;
+  ConfigHandler configHandler = Get.find<ConfigHandler>();
 
   Timer? _timer;
 
@@ -30,13 +32,13 @@ class AppHandler extends GetxController {
 
   Future<void> getAppPositions() async {
     try {
-      final Directory appDocumentsDir = await getApplicationSupportDirectory();
+      String positionsString = await configHandler.loadConfig(configType: ConfigType.appPositions);
 
-      File appPositionsFile = File('${appDocumentsDir.path}/appPositions.json');
+      if (positionsString.isEmpty) {
+        return;
+      }
 
-      String fileString = await appPositionsFile.readAsString();
-
-      List<String> packagePositions = [...jsonDecode(fileString)];
+      List<String> packagePositions = [...jsonDecode(positionsString)];
 
       appPositions.value = packagePositions;
     } catch (e, stackTrace) {
@@ -138,7 +140,7 @@ class AppHandler extends GetxController {
 
   Future<void> moveApp({required int appPosition, required AppInfo app}) async {
     writingAppList.value = true;
-    List<AppInfo> newAppList = installedApps.value;
+    List<AppInfo> newAppList = [...installedApps];
 
     newAppList.remove(app);
     newAppList.insert(appPosition, app);
@@ -150,15 +152,7 @@ class AppHandler extends GetxController {
 
     appPositions.value = packageNames;
 
-    try {
-      final Directory appDocumentsDir = await getApplicationSupportDirectory();
-
-      File appPositionsFile = File('${appDocumentsDir.path}/appPositions.json');
-
-      await appPositionsFile.writeAsString(jsonEncode(packageNames));
-    } catch (e, stackTrace) {
-      print("Failled to store app positions $e, $stackTrace");
-    }
+    await configHandler.saveConfig(config: jsonEncode(packageNames), configType: ConfigType.appPositions);
 
     writingAppList.value = false;
   }

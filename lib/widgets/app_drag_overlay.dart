@@ -1,5 +1,5 @@
-import 'package:classiclauncher/selector_handler.dart';
-import 'package:classiclauncher/theme_handler.dart';
+import 'package:classiclauncher/handlers/selector_handler.dart';
+import 'package:classiclauncher/handlers/theme_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -64,7 +64,7 @@ class _AppDragOverlayState extends State<AppDragOverlay> {
 
       //int nearestRow =
 
-      print("finger is in column: $column ,  row: $row, locked $locked");
+      //print("finger is in column: $column ,  row: $row, locked $locked");
 
       selectorHandler.appMoveCol = locked ? column : null;
       selectorHandler.appMoveRow = locked ? row : null;

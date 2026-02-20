@@ -20,6 +20,11 @@ class LauncherTheme {
   final TextStyle pageIndicatorTextStyle;
   final BoxDecoration selectorDecoration;
   final Color uiPrimaryColour;
+  final Duration appGridEdgeHoverDuration;
+  final Duration longPressActionDuration;
+
+  final double appGridEdgeHoverZoneWidth;
+
   LauncherTheme({
     this.columns = 5,
     this.rows = 3,
@@ -60,8 +65,12 @@ class LauncherTheme {
       ),
     ),
     this.pageIndicatorTextStyle = const TextStyle(fontSize: 14, fontWeight: FontWeight.w400, fontFamily: "SlatePro", height: 1, color: Colors.black),
+    this.appGridEdgeHoverDuration = const Duration(milliseconds: 2500),
+    this.appGridEdgeHoverZoneWidth = 70,
+    this.longPressActionDuration = const Duration(milliseconds: 800),
   });
 
   double get gridOutterSideSize => appGridOutterPadding.left + appGridOutterPadding.right;
   double get gridOutterTopsSize => appGridOutterPadding.top + appGridOutterPadding.bottom;
+  int get appsPerPage => rows * columns;
 }

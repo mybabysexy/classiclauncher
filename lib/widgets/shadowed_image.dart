@@ -44,7 +44,6 @@ class _ShadowedImageState extends State<ShadowedImage> {
               ),
             ),
           ),
-
           SizedBox(
             height: widget.height - 4,
             width: widget.width - 4,

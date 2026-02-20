@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:classiclauncher/app_handler.dart';
+import 'package:classiclauncher/handlers/app_handler.dart';
+import 'package:classiclauncher/handlers/selector_handler.dart';
 import 'package:classiclauncher/models/app_info.dart';
 import 'package:classiclauncher/models/enums.dart';
-import 'package:classiclauncher/theme_handler.dart';
+import 'package:classiclauncher/handlers/theme_handler.dart';
 import 'package:classiclauncher/widgets/app_card.dart';
 import 'package:classiclauncher/widgets/selector_container.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +23,32 @@ class AppPage extends StatefulWidget {
 
 class _AppPageState extends State<AppPage> {
   final AppHandler appHandler = Get.find<AppHandler>();
+  final SelectorHandler selectorHandler = Get.find<SelectorHandler>();
   final ThemeHandler themeHandler = Get.find<ThemeHandler>();
+  late Duration duration;
+  late StreamSubscription<NavGroup?> listener;
+  @override
+  void initState() {
+    duration = selectorHandler.selectedNavGroup.value == null ? Duration(milliseconds: 250) : Duration(milliseconds: 50);
+
+    super.initState();
+
+    listener = selectorHandler.selectedNavGroup.listen((newKey) {
+      Duration newDuration = selectorHandler.selectedNavGroup.value == null ? Duration(milliseconds: 250) : Duration(milliseconds: 50);
+
+      if (mounted && newDuration != duration) {
+        setState(() {
+          duration = newDuration;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    listener.cancel();
+    super.dispose();
+  }
 
   Widget getPositioned({
     required int index,
@@ -41,27 +68,24 @@ class _AppPageState extends State<AppPage> {
 
     return AnimatedPositioned(
       key: ValueKey("AnimatedPositioned::$runtimeType::${NavGroup.appGrid.name}_${app.packageName}"),
-      duration: Duration(milliseconds: 250),
+      duration: duration,
       top: top,
       left: left,
-      child: SelectorContainer(
-        selectorKey: "${NavGroup.appGrid.name}_$globalIndex",
-        child: AppCard(appInfo: app, width: boxWidth, height: boxHeight),
-      ),
+      child: AppCard(appInfo: app, width: boxWidth, height: boxHeight, globalIndex: globalIndex),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     int columns = themeHandler.theme.value.columns;
-    int rows = themeHandler.theme.value.rows;
+
     double columnSpace = themeHandler.theme.value.columnSpacing;
     double rowSpace = themeHandler.theme.value.rowSpacing;
     EdgeInsets appGridPadding = themeHandler.theme.value.appGridOutterPadding;
     double boxWidth = themeHandler.getCardWidth(gridWidth: widget.width);
     double boxHeight = themeHandler.getCardHeight(gridHeight: widget.height);
 
-    int appsPerPage = rows * columns;
+    int appsPerPage = themeHandler.theme.value.appsPerPage;
 
     int start = widget.page * appsPerPage;
     int end = math.min(start + appsPerPage, appHandler.installedApps.length);

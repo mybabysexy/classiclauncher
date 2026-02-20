@@ -1,6 +1,8 @@
 import 'package:classiclauncher/models/launcher_theme.dart';
 import 'package:get/get.dart';
 
+class CardMeta {}
+
 class ThemeHandler extends GetxController {
   Rx<LauncherTheme> theme = Rx(LauncherTheme());
 

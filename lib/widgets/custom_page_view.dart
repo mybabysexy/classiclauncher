@@ -1,5 +1,5 @@
 import 'package:classiclauncher/widgets/app_page.dart';
-import 'package:classiclauncher/selector_handler.dart';
+import 'package:classiclauncher/handlers/selector_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
