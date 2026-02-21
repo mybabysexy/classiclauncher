@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:classiclauncher/handlers/config_handler.dart';
 import 'package:classiclauncher/models/app_info.dart';
+import 'package:classiclauncher/screens/settings_screen.dart';
+import 'package:classiclauncher/utils/constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -30,6 +32,11 @@ class AppHandler extends GetxController {
     });
   }
 
+  Future<Uint8List> loadAssetBytes(String assetPath) async {
+    final data = await rootBundle.load(assetPath);
+    return data.buffer.asUint8List();
+  }
+
   Future<void> getAppPositions() async {
     try {
       String positionsString = await configHandler.loadConfig(configType: ConfigType.appPositions);
@@ -54,11 +61,15 @@ class AppHandler extends GetxController {
     try {
       Map<String, AppInfo> apps = {};
       AppInfo? loliSnatcherInfo;
-      List<dynamic>? results = await methodChannel.invokeMethod<List<dynamic>>('getApps');
+      List<dynamic>? results = await methodChannel.invokeMethod<List<dynamic>>('getApps') ?? [];
 
-      if (results == null) {
-        return;
-      }
+      Uint8List settingsIconBytes = await loadAssetBytes(iconSettingsApp);
+
+      apps["classiclauncher.internal.settings"] = AppInfo(
+        packageName: "classiclauncher.internal.settings",
+        title: "Launcher Settings",
+        icon: settingsIconBytes,
+      );
 
       for (dynamic appInfo in results) {
         if (appInfo is! Map) {
@@ -105,6 +116,11 @@ class AppHandler extends GetxController {
   }
 
   Future<void> launchApp(AppInfo app) async {
+    if (app.packageName == "classiclauncher.internal.settings") {
+      Get.to(SettingsScreen());
+      return;
+    }
+
     try {
       bool? result = await methodChannel.invokeMethod<bool>('launchApp', {"packageName": app.packageName});
     } on PlatformException catch (e, stackTrace) {
@@ -155,5 +171,56 @@ class AppHandler extends GetxController {
     await configHandler.saveConfig(config: jsonEncode(packageNames), configType: ConfigType.appPositions);
 
     writingAppList.value = false;
+  }
+
+  Future<String?> writeFile(dynamic fileData, String fileName, String mediaType, String fileExt, String? extPathOverride) async {
+    String? result;
+    try {
+      result = await methodChannel.invokeMethod('writeFile', {
+        'fileData': fileData,
+        'fileName': fileName,
+        'mediaType': mediaType,
+        'fileExt': fileExt,
+        'extPathOverride': extPathOverride,
+      });
+    } catch (e, stackTrace) {
+      print("Failed to write file $e, $stackTrace");
+    }
+    return result;
+  }
+
+  Future<String?> getSAFDirectoryAccess() async {
+    String? result;
+    try {
+      result = await methodChannel.invokeMethod('getTempDirAccess');
+      print('Got saf path back $result');
+    } catch (e, stackTrace) {
+      print("Failed to get saf path $e, $stackTrace");
+    }
+    return result;
+  }
+
+  Future<Uint8List?> getSAFFile(String contentUri) async {
+    Uint8List? result;
+    try {
+      result = await methodChannel.invokeMethod('getFileBytes', {'uri': contentUri});
+      print('Got file back');
+    } catch (e, stackTrace) {
+      print("Failed to get saf file $e, $stackTrace");
+    }
+    // File(result+"/test.txt").create(recursive: true);
+    return result;
+  }
+
+  Future<String> getSAFUri() async {
+    String result = '';
+    try {
+      result = await methodChannel.invokeMethod('getFileUri');
+      print('Got saf uri back: $result');
+    } catch (e, stackTrace) {
+      print("Failed to get saf uri $e, $stackTrace");
+    }
+    // File(result+"/test.txt").create(recursive: true);
+    return result;
   }
 }

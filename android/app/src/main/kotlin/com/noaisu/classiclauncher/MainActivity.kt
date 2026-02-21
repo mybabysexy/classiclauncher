@@ -1,5 +1,7 @@
 package com.noaisu.classiclauncher
 
+import android.app.Activity
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -12,13 +14,16 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.annotation.NonNull
+import androidx.annotation.RequiresApi
 import androidx.core.graphics.createBitmap
+import androidx.documentfile.provider.DocumentFile
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.RenderMode
 import io.flutter.embedding.android.TransparencyMode
@@ -30,6 +35,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.io.OutputStream
 
 
 class MainActivity : FlutterActivity() {
@@ -38,6 +46,8 @@ class MainActivity : FlutterActivity() {
     private var eventSink: EventChannel.EventSink? = null
   override fun getRenderMode() = RenderMode.texture
   override fun getTransparencyMode() = TransparencyMode.transparent
+    private var methodResult: MethodChannel.Result? = null
+    private var SAFUri: String? = ""
 
   override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
     super.configureFlutterEngine(flutterEngine)
@@ -81,6 +91,46 @@ class MainActivity : FlutterActivity() {
                   result.success(success)
               }}
 
+          "getTempDirAccess" -> {
+              CoroutineScope(Dispatchers.Main).launch {
+                  methodResult = result
+              requestTemporaryDirectoryAccess()
+              }
+          }
+          "getFileUri" -> {
+              CoroutineScope(Dispatchers.Main).launch {
+                  methodResult = result
+                  getFileUri()
+              }
+          }
+
+          "writeFile" -> {
+              val fileBytes = call.argument<ByteArray>("fileData")
+              val fileName = call.argument<String>("fileName")
+              val mediaType = call.argument<String>("mediaType")
+              val fileExt = call.argument<String>("fileExt")
+              val extPathOverride = call.argument<String?>("extPathOverride")
+
+              CoroutineScope(Dispatchers.Main).launch {
+              if (fileBytes != null && mediaType != null && fileExt != null && fileName != null) {
+                  writeFile(fileBytes, fileName, mediaType, fileExt, extPathOverride)
+                  result.success(fileName)
+              } else {
+                  result.error("INVALID_ARGUMENT", "One or more arguments are null", null)
+              }}
+
+          }
+
+          "getFileBytes" -> {
+              val uri = call.argument<String>("uri")
+              if (uri != null) {
+                  CoroutineScope(Dispatchers.Main).launch {
+                  result.success(getFileBytesFromUri(uri))}
+              } else {
+                  result.error("INVALID_ARGUMENT", "URI is null", null)
+              }
+          }
+
 
          /* "getWallpaper" -> {
               CoroutineScope(Dispatchers.Main).launch {
@@ -107,6 +157,86 @@ class MainActivity : FlutterActivity() {
           }
       )
   }
+
+    private fun getFileUri() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            type = "*/*"
+            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf(
+                "text/plain",
+                "application/json"
+            ))
+            flags = Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        }
+
+        startActivityForResult(intent, 1)
+    }
+
+    suspend fun getFileBytesFromUri(uriString: String): ByteArray? {
+        val uri = Uri.parse(uriString)
+        if (uri == Uri.EMPTY) {
+            return null
+        }
+
+        try {
+            val stream = contentResolver.openInputStream(uri)
+            return stream?.buffered()?.use { it.readBytes() }
+        } catch (e: IOException) {
+            if (e is FileNotFoundException) {
+                Log.e("MainActivity", "File not found for URI: $uriString")
+            } else {
+                Log.e("MainActivity", "Error reading from URI: $uriString", e)
+            }
+        }
+
+        return null
+    }
+
+    suspend fun writeFile(fileBytes: ByteArray, name: String, mediaType: String, fileExt: String, extPathOverride: String?) {
+        var fos: OutputStream? = null
+        val resolver = contentResolver
+        val contentValues = ContentValues()
+        var fileUri: Uri? = null
+        var thisMediaType: String = mediaType
+        if (thisMediaType == "animation") {
+            thisMediaType = "image"
+        }
+
+        if (!extPathOverride.isNullOrEmpty()) {
+            val doc = DocumentFile.fromTreeUri(applicationContext, Uri.parse(extPathOverride))
+            if (doc != null && doc.canWrite()) {
+                val file = doc.createFile("$thisMediaType/$fileExt", "$name.$fileExt")
+                if (file != null) {
+                    fos = contentResolver.openOutputStream(file.uri)
+                }
+            }
+        } else {
+            if (thisMediaType == "image") {
+                contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.$fileExt")
+                contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "$thisMediaType/$fileExt")
+                contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/LoliSnatcher/")
+                fileUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            } else {
+                contentValues.put(MediaStore.Video.Media.DISPLAY_NAME, "$name.$fileExt")
+                contentValues.put(MediaStore.Video.Media.MIME_TYPE, "$thisMediaType/$fileExt")
+                contentValues.put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + "/LoliSnatcher/")
+                fileUri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, contentValues)
+            }
+            if (fileUri != null) {
+                fos = resolver.openOutputStream(fileUri)
+            }
+        }
+
+        if (fos != null) {
+            try {
+                fos.write(fileBytes)
+            } finally {
+                fos.close()
+            }
+        }
+    }
+
 
     suspend fun launchApp(packageName: String, context: Context): Boolean {
 
@@ -147,6 +277,26 @@ class MainActivity : FlutterActivity() {
 
 
         return false
+    }
+
+    suspend fun requestDirectoryAccess() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+            putExtra("pickerMode", "directory")
+            flags = Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        }
+
+        startActivityForResult(intent, 1)
+    }
+
+    suspend fun requestTemporaryDirectoryAccess() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+            putExtra("pickerMode", "directory")
+            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        }
+
+        startActivityForResult(intent, 1)
     }
 
     suspend fun launchCamera(context: Context): Boolean{
@@ -291,6 +441,31 @@ private fun PackageManager.getInstalledPackagesCompat(flags: Long = 0L): List<Pa
         Log.d("USB_KEY_DEBUG", info)
 
         return super.onGenericMotionEvent(event)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.KITKAT)
+    override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
+        super.onActivityResult(requestCode, resultCode, resultData)
+
+        if (resultCode == Activity.RESULT_OK && resultData?.data != null) {
+            val uri = resultData.data
+            val mode = resultData.getStringExtra("pickerMode")
+
+            if (uri != null) {
+                SAFUri = uri.toString()
+                try {
+                    contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    methodResult?.success(uri.toString())
+                } catch (e: SecurityException) {
+                    Log.e("MainActivity", "Failed to take persistable URI permission", e)
+                    methodResult?.error("PERMISSION_ERROR", "Failed to take persistable URI permission", null)
+                }
+            } else {
+                methodResult?.error("INVALID_URI", "URI is null", null)
+            }
+        } else {
+            methodResult?.error("RESULT_ERROR", "Invalid result or data", null)
+        }
     }
 
 

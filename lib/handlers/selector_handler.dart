@@ -94,52 +94,91 @@ class SelectorHandler extends GetxController {
   RxMap<Input, Timer> heldInputs = RxMap();
   List<Input> cancelRelease = [];
 
+  Input? getInput(int keyCode) {
+    if (keyCode == 66) {
+      return Input.select;
+    }
+
+    if (keyCode == 4) {
+      return Input.back;
+    }
+
+    return null;
+  }
+
+  void doLongPress(Input input) {
+    switch (input) {
+      case Input.select:
+        if (selectedNavGroup.value == NavGroup.appGrid) {
+          editing.value = true;
+          moving.value = appHandler.installedApps[selectedIndex.value];
+        }
+      default:
+        return;
+    }
+  }
+
+  void queueLongPress(Input input) {
+    heldInputs.putIfAbsent(
+      input,
+      () => Timer(themeHandler.theme.value.longPressActionDuration, () {
+        if (editing.value) {
+          print("long press detected while editing returning");
+          return;
+        }
+        print("long press detected");
+        cancelRelease.add(input);
+        heldInputs[input]!.cancel();
+        heldInputs.remove(input);
+        doLongPress(input);
+      }),
+    );
+  }
+
   void handleKeyPress(KeyPress keyPress) {
+    print("keyy pressed $keyPress");
+
     if (keyPress.isTrackPadDirection && keyPress.state == KeyState.keyUp) {
       handleDirection(keyPress);
     }
 
-    if (keyPress.state == KeyState.keyDown) {
-      print("press started");
-      heldInputs.putIfAbsent(
-        Input.select,
-        () => Timer(themeHandler.theme.value.longPressActionDuration, () {
-          if (editing.value) {
-            print("long press detected while editing returning");
-            return;
-          }
-          print("long press detected");
-          cancelRelease.add(Input.select);
-          heldInputs[Input.select]!.cancel();
-          heldInputs.remove(Input.select);
-          if (selectedNavGroup.value == NavGroup.appGrid) {
-            editing.value = true;
-            moving.value = appHandler.installedApps[selectedIndex.value];
-          }
-        }),
-      );
-    }
+    Input? input = getInput(keyPress.keyCode);
 
-    if (keyPress.keyCode == 66 && keyPress.state == KeyState.keyUp && heldInputs.containsKey(Input.select)) {
-      heldInputs[Input.select]!.cancel();
-      heldInputs.remove(Input.select);
-
-      print("press ended");
-    }
-
-    if (keyPress.keyCode == 66 && keyPress.state == KeyState.keyUp && cancelRelease.contains(Input.select)) {
-      cancelRelease.remove(Input.select);
-      print("release cancelled");
+    if (input == null) {
       return;
     }
 
-    if (keyPress.keyCode == 66 && keyPress.state == KeyState.keyUp && editing.value) {
+    if (keyPress.state == KeyState.keyDown) {
+      print("press started ${keyPress.keyCode}, $input");
+      queueLongPress(input);
+    }
+
+    if (keyPress.state == KeyState.keyUp && heldInputs.containsKey(input)) {
+      heldInputs[input]!.cancel();
+      heldInputs.remove(input);
+
+      print("press ended ${keyPress.keyCode}, $input");
+    }
+
+    if (keyPress.state == KeyState.keyUp && cancelRelease.contains(input)) {
+      cancelRelease.remove(input);
+      print("press cancelled ${keyPress.keyCode}, $input");
+      return;
+    }
+
+    if (input == Input.select && keyPress.state == KeyState.keyUp && editing.value) {
       editing.value = false;
       moving.value = null;
       return;
     }
 
-    if (keyPress.keyCode == 66 && keyPress.state == KeyState.keyUp) {
+    if (input == Input.back && keyPress.state == KeyState.keyUp) {
+      if (Get.currentRoute != "/") {
+        Get.back();
+      }
+    }
+
+    if (input == Input.select && keyPress.state == KeyState.keyUp) {
       handleWidgetPress();
     }
   }
@@ -231,7 +270,7 @@ class SelectorHandler extends GetxController {
     int currentPage = selectedIndex.value ~/ pageSize;
     int nextPageStart = (currentPage + 1) * pageSize;
     int prevPageStart = (currentPage - 1) * pageSize;
-    int maxPage = ((maxItems / pageSize).round() - 1);
+    int maxPage = ((maxItems / pageSize).ceil() - 1);
 
     bool isRightEdge = currentCol == columnCount - 1;
     bool isTopEdge = currentRow == 0;
@@ -255,7 +294,7 @@ class SelectorHandler extends GetxController {
           selectedIndex.value = (lastApp % _appsPerPage) + (_appsPerPage * appGridPage.value);
 
           print("at up moving to widget above");
-          return;
+          break;
         }
         selectedIndex.value = (selectedIndex.value - columnCount).clamp(0, maxItems);
         break;
@@ -269,7 +308,7 @@ class SelectorHandler extends GetxController {
           lastApp = selectedIndex.value;
           selectedIndex.value = 0;
           print("at bottom moving to widget below");
-          return;
+          break;
         }
 
         selectedIndex.value = (selectedIndex.value + columnCount).clamp(0, maxItems);
@@ -289,7 +328,7 @@ class SelectorHandler extends GetxController {
           selectedIndex.value = prevPageStart + (currentRow * columnCount) + (columnCount - 1);
           _scrollToIndex(selectedIndex.value);
           print("at left moving to prev page");
-          return;
+          break;
         }
 
         selectedIndex.value--;
@@ -306,14 +345,25 @@ class SelectorHandler extends GetxController {
 
         // Move to next page same row if fast
         if (isRightEdge && moveType == MoveType.hard) {
-          selectedIndex.value = nextPageStart + (currentRow * columnCount);
+          int nextIndex = nextPageStart + (currentRow * columnCount);
+
+          selectedIndex.value = nextIndex >= _appCount - 1 ? _appCount - 1 : nextIndex;
           _scrollToIndex(selectedIndex.value);
           print("at right moving to prev page");
-          return;
+          break;
         }
         selectedIndex.value++;
 
         break;
+    }
+
+    // This still clicks probably should update selectedindex only from a fucntion so we can check before updating
+    if (navGroup == NavGroup.appGrid && selectedIndex.value >= maxItems - 1) {
+      selectedIndex.value = _appCount - 1;
+    }
+
+    if (navGroup == NavGroup.appGrid && selectedIndex.value < 0) {
+      selectedIndex.value = 0;
     }
   }
 

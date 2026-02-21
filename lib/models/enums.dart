@@ -6,4 +6,4 @@ enum MoveType { soft, hard }
 
 enum Direction { up, down, left, right }
 
-enum Input { select }
+enum Input { select, back }

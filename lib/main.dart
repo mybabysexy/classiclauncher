@@ -64,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
         int appsPerPage = rows * columns;
         List<AppInfo> apps = appHandler.installedApps;
 
-        int pageCount = (apps.length / appsPerPage).round();
+        int pageCount = (apps.length / appsPerPage).ceil();
 
         return SizedBox(
           width: Get.width,
