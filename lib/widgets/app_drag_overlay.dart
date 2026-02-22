@@ -1,4 +1,5 @@
-import 'package:classiclauncher/handlers/selector_handler.dart';
+import 'package:classiclauncher/handlers/app_grid_handler.dart';
+import 'package:classiclauncher/handlers/app_handler.dart';
 import 'package:classiclauncher/handlers/theme_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,30 +14,31 @@ class AppDragOverlay extends StatefulWidget {
 }
 
 class _AppDragOverlayState extends State<AppDragOverlay> {
-  final SelectorHandler selectorHandler = Get.find<SelectorHandler>();
+  final AppHandler appHandler = Get.find<AppHandler>();
   final ThemeHandler themeHandler = Get.find<ThemeHandler>();
+  final AppGridHandler appGridHandler = Get.find<AppGridHandler>();
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (!selectorHandler.editing.value) {
+      if (!appGridHandler.editing.value) {
         return SizedBox.shrink();
       }
-      if (selectorHandler.fingerX.value == null && selectorHandler.fingerY.value == null) {
+      if (appGridHandler.fingerX.value == null && appGridHandler.fingerY.value == null) {
         return SizedBox.shrink();
       }
 
       // add one to colums as we want the number of spaces beteen
-      int columns = themeHandler.theme.value.columns + 1;
-      int rows = themeHandler.theme.value.rows;
-      double columnSpace = themeHandler.theme.value.columnSpacing;
-      double rowSpace = themeHandler.theme.value.rowSpacing;
-      EdgeInsets appGridPadding = themeHandler.theme.value.appGridOutterPadding;
+      int columns = themeHandler.theme.value.appGridTheme.columns + 1;
+      int rows = themeHandler.theme.value.appGridTheme.rows;
+      double columnSpace = themeHandler.theme.value.appGridTheme.columnSpacing;
+      double rowSpace = themeHandler.theme.value.appGridTheme.rowSpacing;
+      EdgeInsets appGridPadding = themeHandler.theme.value.appGridTheme.appGridOutterPadding;
       double boxWidth = themeHandler.getCardWidth(gridWidth: widget.width);
       double boxHeight = themeHandler.getCardHeight(gridHeight: widget.height);
       double columnStride = boxWidth + columnSpace;
 
-      double x = selectorHandler.fingerX.value!;
-      double y = selectorHandler.fingerY.value!;
+      double x = appGridHandler.fingerX.value!;
+      double y = appGridHandler.fingerY.value!;
 
       double rowStride = boxHeight + rowSpace;
 
@@ -64,10 +66,10 @@ class _AppDragOverlayState extends State<AppDragOverlay> {
 
       //int nearestRow =
 
-      //print("finger is in column: $column ,  row: $row, locked $locked");
+      print("finger is in column: $column ,  row: $row, locked $locked");
 
-      selectorHandler.appMoveCol = locked ? column : null;
-      selectorHandler.appMoveRow = locked ? row : null;
+      appGridHandler.appMoveCol = locked ? column : null;
+      appGridHandler.appMoveRow = locked ? row : null;
 
       return SizedBox(
         width: widget.width,
@@ -89,7 +91,7 @@ class _AppDragOverlayState extends State<AppDragOverlay> {
               left: x + 3,
               width: 6,
 
-              child: Container(decoration: themeHandler.theme.value.selectorDecoration),
+              child: Container(decoration: themeHandler.theme.value.appGridTheme.selectorTheme.decoration),
             ),
           ],
         ),

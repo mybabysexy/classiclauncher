@@ -1,24 +1,23 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:classiclauncher/handlers/app_grid_handler.dart';
 import 'package:classiclauncher/handlers/app_handler.dart';
 import 'package:classiclauncher/models/app_info.dart';
-import 'package:classiclauncher/handlers/selector_handler.dart';
 import 'package:classiclauncher/handlers/theme_handler.dart';
-import 'package:classiclauncher/widgets/selector_container.dart';
+import 'package:classiclauncher/screens/select_gesture_detector.dart';
+import 'package:classiclauncher/screens/selectable_container.dart';
+import 'package:classiclauncher/utils/launcher_utils.dart';
 import 'package:classiclauncher/widgets/shadowed_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
-
-import '../models/enums.dart';
 
 class AppCard extends StatefulWidget {
   final AppInfo appInfo;
   final double width;
   final double height;
-  final int globalIndex;
-  const AppCard({super.key, required this.appInfo, required this.width, required this.height, required this.globalIndex});
+  final String selectableKey;
+  const AppCard({super.key, required this.appInfo, required this.width, required this.height, required this.selectableKey});
 
   @override
   State<AppCard> createState() => _AppCardState();
@@ -26,18 +25,19 @@ class AppCard extends StatefulWidget {
 
 class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
   ThemeHandler themeHandler = Get.find<ThemeHandler>();
-  SelectorHandler selectorHandler = Get.find<SelectorHandler>();
+  AppHandler appHandler = Get.find<AppHandler>();
+  AppGridHandler appGridHandler = Get.find<AppGridHandler>();
   late AnimationController controller;
   late StreamSubscription<bool> sub;
   late Animation<double> scaleAnimation;
-
+  bool isFingerDown = false;
   @override
   void initState() {
     controller = AnimationController(vsync: this, duration: Duration(milliseconds: 800));
 
     scaleAnimation = Tween<double>(begin: 1, end: 0.8).animate(CurvedAnimation(parent: controller, curve: Curves.easeInOut));
-    onEditChange(selectorHandler.editing.value);
-    sub = selectorHandler.editing.listen(onEditChange);
+    onEditChange(appGridHandler.editing.value);
+    sub = appGridHandler.editing.listen(onEditChange);
     super.initState();
   }
 
@@ -59,39 +59,41 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
     controller.reset();
   }
 
-  void onDropApp() {
-    selectorHandler.moving.value = null;
-    selectorHandler.editing.value = false;
-    selectorHandler.fingerX.value = null;
-    selectorHandler.fingerY.value = null;
+  void startEdit(bool dragging) {
+    if (appGridHandler.editing.value) {
+      return;
+    }
+    appGridHandler.editing.value = true;
+    appGridHandler.dragging.value = dragging;
+    LauncherUtils.doFeedback();
+    appGridHandler.moving.value = widget.appInfo;
+  }
 
-    if (selectorHandler.appMoveCol == null && selectorHandler.appMoveRow == null) {
+  void onDropApp() async {
+    appGridHandler.stopEdit();
+
+    if (appGridHandler.appMoveCol == null && appGridHandler.appMoveRow == null) {
       return;
     }
 
-    int appsPerPage = themeHandler.theme.value.appsPerPage;
+    int appsPerPage = themeHandler.theme.value.appGridTheme.appsPerPage;
 
-    int pageStart = 0 + (appsPerPage * selectorHandler.appGridPage.value);
+    int pageStart = 0 + (appsPerPage * appGridHandler.pageNotifier.value);
 
-    int offset = (selectorHandler.appMoveRow! * themeHandler.theme.value.columns) + selectorHandler.appMoveCol!;
+    int offset = (appGridHandler.appMoveRow! * themeHandler.theme.value.appGridTheme.columns) + appGridHandler.appMoveCol!;
 
     int appPosition = pageStart + offset;
 
-    AppHandler appHandler = Get.find<AppHandler>();
-    appHandler.moveApp(appPosition: appPosition, app: widget.appInfo);
-    selectorHandler.moving.value = null;
+    await appHandler.moveApp(appPosition: appPosition, app: widget.appInfo);
   }
 
   @override
   Widget build(BuildContext context) {
     return LongPressDraggable(
-      delay: themeHandler.theme.value.longPressActionDuration,
+      hitTestBehavior: HitTestBehavior.translucent,
       hapticFeedbackOnStart: false,
       onDragStarted: () {
-        selectorHandler.editing.value = true;
-        selectorHandler.selectedNavGroup.value = null;
-        selectorHandler.doFeedback();
-        selectorHandler.moving.value = widget.appInfo;
+        startEdit(true);
       },
       onDraggableCanceled: (velocity, offset) {
         print("cancelled");
@@ -115,10 +117,14 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Padding(
-                padding: themeHandler.theme.value.appCardIconPadding,
-                child: ShadowedImage(width: themeHandler.theme.value.iconSize, height: themeHandler.theme.value.iconSize, imageBytes: widget.appInfo.icon),
+                padding: themeHandler.theme.value.appGridTheme.appCardIconPadding,
+                child: ShadowedImage(
+                  width: themeHandler.theme.value.appGridTheme.iconSize,
+                  height: themeHandler.theme.value.appGridTheme.iconSize,
+                  imageBytes: widget.appInfo.icon,
+                ),
               ),
-              Text(widget.appInfo.title, textAlign: TextAlign.center, style: themeHandler.theme.value.appCardTextStyle),
+              Text(widget.appInfo.title, textAlign: TextAlign.center, style: themeHandler.theme.value.appGridTheme.appCardTextStyle),
             ],
           ),
         ),
@@ -128,15 +134,42 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
         builder: (_, __) {
           return Transform.scale(
             scale: scaleAnimation.value,
-            child: SizedBox(
-              key: ValueKey("AppCard::${widget.appInfo.packageName}::${widget.width}::${widget.height}"),
+            child: Container(
+              key: ValueKey("AppCard::${widget.appInfo.packageName}::${widget.width}::${widget.height}${appHandler.installedApps.indexOf(widget.appInfo)}"),
               width: widget.width,
               height: widget.height,
-              child: SelectorContainer(
-                key: ValueKey("${NavGroup.appGrid.name}_${widget.globalIndex}_${widget.appInfo.packageName}"),
-                selectorKey: "${NavGroup.appGrid.name}_${widget.globalIndex}",
+              decoration: themeHandler.theme.value.appGridTheme.appCardDecoration,
+              child: SelectableContainer(
+                selectableKey: "${widget.selectableKey}_${appHandler.installedApps.indexOf(widget.appInfo)}",
+                selectorTheme: themeHandler.theme.value.appGridTheme.selectorTheme,
+                canLongPress: () {
+                  return !appGridHandler.editing.value;
+                },
+
+                onTapDown: (details) {
+                  setState(() {
+                    isFingerDown = true;
+                  });
+                },
+                onTapUp: (details) {
+                  setState(() {
+                    isFingerDown = false;
+                  });
+                },
+                onTap: () {
+                  if (appGridHandler.editing.value) {
+                    appGridHandler.stopEdit();
+                    return;
+                  }
+                  appHandler.launchApp(widget.appInfo);
+                },
+                onLongPress: isFingerDown
+                    ? null
+                    : () {
+                        startEdit(false);
+                      },
                 child: Obx(() {
-                  if (selectorHandler.moving.value == widget.appInfo && selectorHandler.editing.value && selectorHandler.selectedNavGroup.value == null) {
+                  if (appGridHandler.moving.value == widget.appInfo && appGridHandler.editing.value && appGridHandler.dragging.value) {
                     return SizedBox.shrink();
                   }
 
@@ -144,14 +177,14 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Padding(
-                        padding: themeHandler.theme.value.appCardIconPadding,
+                        padding: themeHandler.theme.value.appGridTheme.appCardIconPadding,
                         child: ShadowedImage(
-                          width: themeHandler.theme.value.iconSize,
-                          height: themeHandler.theme.value.iconSize,
+                          width: themeHandler.theme.value.appGridTheme.iconSize,
+                          height: themeHandler.theme.value.appGridTheme.iconSize,
                           imageBytes: widget.appInfo.icon,
                         ),
                       ),
-                      Text(widget.appInfo.title, textAlign: TextAlign.center, style: themeHandler.theme.value.appCardTextStyle),
+                      Text(widget.appInfo.title, textAlign: TextAlign.center, style: themeHandler.theme.value.appGridTheme.appCardTextStyle),
                     ],
                   );
                 }),

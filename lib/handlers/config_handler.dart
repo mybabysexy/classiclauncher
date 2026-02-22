@@ -30,6 +30,26 @@ class ConfigHandler extends GetxController {
     });
   }
 
+  Future<void> deleteConfig({required ConfigType configType}) async {
+    WriteQueue queue = _writeQueues.putIfAbsent(configType, () => WriteQueue());
+
+    return queue.queueAndWait(() async {
+      await _deleteFile(configType: configType);
+    });
+  }
+
+  Future<void> _deleteFile({required ConfigType configType}) async {
+    final Directory appDocumentsDir = await getApplicationSupportDirectory();
+
+    File file = File('${appDocumentsDir.path}/${configType.name}.json');
+
+    try {
+      await file.delete();
+    } catch (e, stackTrace) {
+      print("Failed to store file $configType, $e, $stackTrace");
+    }
+  }
+
   Future<void> _writeFile({required String config, required ConfigType configType}) async {
     final Directory appDocumentsDir = await getApplicationSupportDirectory();
 

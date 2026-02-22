@@ -1,0 +1,53 @@
+import 'dart:async';
+
+import 'package:classiclauncher/models/app_info.dart';
+import 'package:classiclauncher/models/key_press.dart';
+import 'package:classiclauncher/selection/key_input_handler.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+class AppGridHandler extends GetxController {
+  final RxBool editing = RxBool(false);
+  final Rx<AppInfo?> moving = Rx(null);
+  final RxBool dragging = RxBool(false);
+  final RxInt selectedGridIndex = 0.obs;
+  int? appMoveCol;
+  int? appMoveRow;
+  Rx<Timer?> pageChangeEdgeTimer = Rx(null);
+  late StreamSubscription inputSub;
+  Rx<double?> fingerX = Rx(null);
+  Rx<double?> fingerY = Rx(null);
+
+  ValueNotifier<int> pageNotifier = ValueNotifier(0);
+
+  @override
+  void onInit() {
+    super.onInit();
+
+    ever(editing, (_) {
+      if (editing.value) {
+        print("editng started");
+        return;
+      }
+      print("editng ended");
+    });
+
+    inputSub = Get.find<KeyInputHandler>().keyStream.listen((keyPress) {
+      if (keyPress.input == Input.back && editing.value) {
+        stopEdit();
+      }
+    });
+  }
+
+  void stopEdit() {
+    moving.value = null;
+    editing.value = false;
+    fingerX.value = null;
+    fingerY.value = null;
+  }
+
+  void clearTimer() {
+    pageChangeEdgeTimer.value?.cancel();
+    pageChangeEdgeTimer.value = null;
+  }
+}

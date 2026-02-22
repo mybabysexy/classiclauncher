@@ -1,5 +1,9 @@
 enum KeyState { keyDown, keyUp }
 
+enum Input { select, back }
+
+enum Direction { up, down, left, right }
+
 class KeyPress {
   final int keyCode;
   final String _keyLabel;
@@ -54,6 +58,33 @@ class KeyPress {
   }
 
   bool get isTrackPadDirection => keyCode == 19 || keyCode == 20 || keyCode == 21 || keyCode == 22;
+
+  Input? get input {
+    switch (keyCode) {
+      case 66:
+        return Input.select;
+      case 4:
+        return Input.back;
+    }
+    return null;
+  }
+
+  Direction? get direction {
+    switch (keyCode) {
+      case 19:
+        return Direction.up;
+
+      case 20:
+        return Direction.down;
+
+      case 21:
+        return Direction.left;
+
+      case 22:
+        return Direction.right;
+    }
+    return null;
+  }
 
   @override
   String toString() => '$runtimeType(keyCode: $keyCode, state: $state, keyLabel: $label,)';

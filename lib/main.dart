@@ -1,28 +1,26 @@
-import 'dart:async';
-import 'dart:ui';
-
+import 'package:classiclauncher/handlers/app_grid_handler.dart';
 import 'package:classiclauncher/handlers/app_handler.dart';
 import 'package:classiclauncher/handlers/config_handler.dart';
-import 'package:classiclauncher/models/app_info.dart';
-import 'package:classiclauncher/handlers/selector_handler.dart';
 import 'package:classiclauncher/handlers/theme_handler.dart';
+import 'package:classiclauncher/screens/selectable_container.dart';
+import 'package:classiclauncher/selection/key_input_handler.dart';
 import 'package:classiclauncher/utils/constants.dart';
-import 'package:classiclauncher/widgets/app_drag_overlay.dart';
-import 'package:classiclauncher/widgets/app_page.dart';
-import 'package:classiclauncher/widgets/custom_page_view.dart';
 import 'package:classiclauncher/widgets/page_indicator.dart';
-import 'package:classiclauncher/widgets/selector_container.dart';
+import 'package:classiclauncher/widgets/selectable/selectable.dart';
+import 'package:classiclauncher/widgets/selectable/selectable_controller.dart';
+import 'package:classiclauncher/widgets/selectable/app_grid.dart';
+import 'package:classiclauncher/widgets/selectable/selectable_list.dart';
 import 'package:classiclauncher/widgets/shadowed_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'models/enums.dart';
-
 void main() {
+  Get.put(KeyInputHandler(), permanent: true);
   Get.put(ConfigHandler(), permanent: true);
   Get.put(AppHandler(), permanent: true);
   Get.put(ThemeHandler(), permanent: true);
-  Get.put(SelectorHandler(), permanent: true);
+  Get.put(AppGridHandler(), permanent: true);
+
   runApp(const MyApp());
 }
 
@@ -50,7 +48,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final AppHandler appHandler = Get.find<AppHandler>();
   final ThemeHandler themeHandler = Get.find<ThemeHandler>();
-  final SelectorHandler selectorHandler = Get.find<SelectorHandler>();
+  final SelectableController controller = SelectableController(route: "/");
+  final AppGridHandler appGridHandler = Get.find<AppGridHandler>();
 
   @override
   Widget build(BuildContext context) {
@@ -59,13 +58,6 @@ class _MyHomePageState extends State<MyHomePage> {
       extendBody: true,
       extendBodyBehindAppBar: true,
       body: Obx(() {
-        int columns = themeHandler.theme.value.columns;
-        int rows = themeHandler.theme.value.rows;
-        int appsPerPage = rows * columns;
-        List<AppInfo> apps = appHandler.installedApps;
-
-        int pageCount = (apps.length / appsPerPage).ceil();
-
         return SizedBox(
           width: Get.width,
           height: Get.height,
@@ -75,114 +67,92 @@ class _MyHomePageState extends State<MyHomePage> {
               Expanded(
                 child: LayoutBuilder(
                   builder: (BuildContext context, BoxConstraints constraints) {
-                    List<Widget> pages = [for (int i = 0; i < pageCount; i++) AppPage(width: constraints.maxWidth, height: constraints.maxHeight, page: i)];
-                    return Listener(
-                      behavior: HitTestBehavior.translucent,
-
-                      onPointerUp: (event) {
-                        selectorHandler.fingerX.value = null;
-                        selectorHandler.fingerY.value = null;
-                      },
-                      onPointerDown: (PointerDownEvent event) {
-                        selectorHandler.fingerX.value = event.localPosition.dx;
-                        selectorHandler.fingerY.value = event.localPosition.dy;
-                      },
-                      onPointerMove: (event) {
-                        double zoneWidth = themeHandler.theme.value.appGridEdgeHoverZoneWidth;
-
-                        selectorHandler.fingerX.value = event.localPosition.dx;
-                        selectorHandler.fingerY.value = event.localPosition.dy;
-
-                        if (event.localPosition.dx < zoneWidth || event.localPosition.dx > (constraints.maxWidth - zoneWidth)) {
-                          if (selectorHandler.pageChangeEdgeTimer.value != null) {
-                            return;
-                          }
-                          selectorHandler.pageChangeEdgeTimer.value = Timer(themeHandler.theme.value.appGridEdgeHoverDuration, () {
-                            if (selectorHandler.fingerX.value == null) {
-                              selectorHandler.clearTimer();
-                              return;
-                            }
-
-                            if (selectorHandler.fingerX.value! < zoneWidth) {
-                              selectorHandler.appGridPage.value--;
-                            }
-
-                            if (selectorHandler.fingerX.value! > (constraints.maxWidth - zoneWidth)) {
-                              selectorHandler.appGridPage.value++;
-                            }
-
-                            selectorHandler.pageChangeEdgeTimer.value = null;
-                          });
-                        } else if (selectorHandler.pageChangeEdgeTimer.value != null) {
-                          selectorHandler.clearTimer();
-                        }
-                      },
-                      child: Stack(
-                        children: [
-                          AppDragOverlay(width: constraints.maxWidth, height: constraints.maxHeight),
-                          Obx(
-                            () => IgnorePointer(
-                              ignoring: selectorHandler.editing.value,
-                              child: CustomPageView(constraints: constraints, children: pages),
-                            ),
-                          ),
-                        ],
-                      ),
+                    return Selectable(
+                      controller: controller,
+                      child: AppGrid(constraints: constraints),
                     );
                   },
                 ),
               ),
               SizedBox(
                 height: themeHandler.theme.value.navBarHeight,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Obx(() {
-                      return Padding(
-                        padding: EdgeInsetsGeometry.only(left: themeHandler.theme.value.navBarSpacing, right: themeHandler.theme.value.navBarSpacing),
-                        child: SelectorContainer(
-                          selectorKey: "${NavGroup.navBar.name}_0",
-                          child: SizedBox(
-                            height: themeHandler.theme.value.navBarHeight,
-                            width: themeHandler.theme.value.navBarHeight,
-                            child: ShadowedImage(
-                              width: themeHandler.theme.value.navBarIconSize,
-                              height: themeHandler.theme.value.navBarIconSize,
-                              assetPath: appHandler.loliSnatcher.value == null ? iconMessages : iconKanna2,
+                child: Selectable(
+                  controller: controller,
+                  child: SelectableList.builder(
+                    zoneIndex: 1,
+                    childCount: 3,
+                    zoneKey: "NavRow",
+                    axis: Axis.horizontal,
+                    childBuilder: (index, key) {
+                      switch (index) {
+                        case 0:
+                          return Padding(
+                            padding: EdgeInsetsGeometry.only(left: themeHandler.theme.value.navBarSpacing, right: themeHandler.theme.value.navBarSpacing),
+                            child: SelectableContainer(
+                              selectableKey: "${key}_$index",
+                              selectorTheme: themeHandler.theme.value.appGridTheme.selectorTheme,
+                              onTap: () {
+                                appHandler.launchMail();
+                              },
+                              child: SizedBox(
+                                height: themeHandler.theme.value.navBarHeight,
+                                width: themeHandler.theme.value.navBarHeight,
+                                child: ShadowedImage(
+                                  width: themeHandler.theme.value.navBarIconSize,
+                                  height: themeHandler.theme.value.navBarIconSize,
+                                  assetPath: appHandler.loliSnatcher.value == null ? iconMessages : iconKanna2,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      );
-                    }),
-                    Expanded(
-                      child: SelectorContainer(
-                        selectorKey: "${NavGroup.navBar.name}_1",
-                        child: SizedBox(
-                          height: themeHandler.theme.value.navBarHeight,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [Obx(() => PageIndicators(selected: selectorHandler.appGridPage.value, pageCount: pageCount))],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsetsGeometry.only(left: themeHandler.theme.value.navBarSpacing, right: themeHandler.theme.value.navBarSpacing),
-                      child: SelectorContainer(
-                        selectorKey: "${NavGroup.navBar.name}_2",
-                        child: SizedBox(
-                          height: themeHandler.theme.value.navBarHeight,
-                          width: themeHandler.theme.value.navBarHeight,
-                          child: ShadowedImage(
-                            width: themeHandler.theme.value.navBarIconSize,
-                            height: themeHandler.theme.value.navBarIconSize,
-                            assetPath: iconCamera,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                          );
+                        case 1:
+                          return Expanded(
+                            child: SelectableContainer(
+                              selectableKey: "${key}_$index",
+                              selectorTheme: themeHandler.theme.value.appGridTheme.selectorTheme,
+                              child: SizedBox(
+                                height: themeHandler.theme.value.navBarHeight,
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Obx(() {
+                                      int pageCount =
+                                          (appHandler.installedApps.length /
+                                                  (themeHandler.theme.value.appGridTheme.rows * themeHandler.theme.value.appGridTheme.columns))
+                                              .ceil();
+                                      return PageIndicators(selected: appGridHandler.pageNotifier, pageCount: pageCount);
+                                    }),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+
+                        case 2:
+                          return Padding(
+                            padding: EdgeInsetsGeometry.only(left: themeHandler.theme.value.navBarSpacing, right: themeHandler.theme.value.navBarSpacing),
+                            child: SelectableContainer(
+                              selectableKey: "${key}_$index",
+                              selectorTheme: themeHandler.theme.value.appGridTheme.selectorTheme,
+                              onTap: () {
+                                appHandler.launchCamera();
+                              },
+                              child: SizedBox(
+                                height: themeHandler.theme.value.navBarHeight,
+                                width: themeHandler.theme.value.navBarHeight,
+                                child: ShadowedImage(
+                                  width: themeHandler.theme.value.navBarIconSize,
+                                  height: themeHandler.theme.value.navBarIconSize,
+                                  assetPath: iconCamera,
+                                ),
+                              ),
+                            ),
+                          );
+                      }
+                      return SizedBox.shrink();
+                    },
+                  ),
                 ),
               ),
             ],

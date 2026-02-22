@@ -1,10 +1,8 @@
-import 'package:classiclauncher/widgets/app_page.dart';
-import 'package:classiclauncher/handlers/selector_handler.dart';
+import 'package:classiclauncher/models/key_press.dart';
+import 'package:classiclauncher/screens/select_gesture_detector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-
-import '../models/enums.dart';
 
 // CustomPageView unchanged except removing currentPage prop and reading from handler
 class CustomPage extends StatefulWidget {
@@ -13,6 +11,7 @@ class CustomPage extends StatefulWidget {
   final double height;
   final AnimationController controller;
   final ValueNotifier<Direction?> directionNotifier;
+
   final int currentPage;
 
   const CustomPage({
@@ -30,7 +29,6 @@ class CustomPage extends StatefulWidget {
 }
 
 class _CustomPageState extends State<CustomPage> {
-  final SelectorHandler selectorHandler = Get.find<SelectorHandler>();
   late final Animation<double> scaleAnimation;
 
   @override
@@ -57,34 +55,23 @@ class _CustomPageState extends State<CustomPage> {
             return Stack(
               children: [
                 if (next != null)
-                  Positioned(
-                    left: direction == Direction.left ? widget.width - (t * widget.width) - ((1 - t) * (widget.width * 0.3)) : widget.width * 2,
-                    top: 0,
-                    width: widget.width,
-                    height: widget.height,
+                  Transform.translate(
+                    offset: Offset(direction == Direction.left ? (widget.width - (t * widget.width) - ((1 - t) * (widget.width * 0.3))) : widget.width, 0),
                     child: Opacity(
                       opacity: widget.controller.value,
                       child: Transform.scale(scale: scaleAnimation.value, child: next),
                     ),
                   ),
+
                 if (previous != null)
-                  Positioned(
-                    right: direction == Direction.right ? widget.width - (t * widget.width) - ((1 - t) * (widget.width * 0.3)) : -widget.width,
-                    top: 0,
-                    width: widget.width,
-                    height: widget.height,
+                  Transform.translate(
+                    offset: Offset(direction == Direction.right ? -(widget.width - (t * widget.width) - ((1 - t) * (widget.width * 0.3))) : widget.width, 0),
                     child: Opacity(
                       opacity: widget.controller.value,
                       child: Transform.scale(scale: scaleAnimation.value, child: previous),
                     ),
                   ),
-                Positioned(
-                  left: direction == Direction.left ? -(t * widget.width) : t * widget.width,
-                  top: 0,
-                  width: widget.width,
-                  height: widget.height,
-                  child: current,
-                ),
+                Transform.translate(offset: Offset(direction == Direction.left ? -(t * widget.width) : t * widget.width, 0), child: current),
               ],
             );
           },
@@ -97,15 +84,15 @@ class _CustomPageState extends State<CustomPage> {
 class CustomPageView extends StatefulWidget {
   final BoxConstraints constraints;
   final List<Widget> children;
+  final ValueNotifier<int> pageNotifier;
 
-  const CustomPageView({super.key, required this.constraints, required this.children});
+  const CustomPageView({super.key, required this.constraints, required this.children, required this.pageNotifier});
 
   @override
   State<CustomPageView> createState() => _CustomPageViewState();
 }
 
 class _CustomPageViewState extends State<CustomPageView> with SingleTickerProviderStateMixin {
-  final SelectorHandler selectorHandler = Get.find<SelectorHandler>();
   late AnimationController controller;
   final ValueNotifier<Direction?> direction = ValueNotifier(null);
   late List<Widget> children;
@@ -115,7 +102,7 @@ class _CustomPageViewState extends State<CustomPageView> with SingleTickerProvid
   @override
   void initState() {
     super.initState();
-    currentPage = selectorHandler.appGridPage.value;
+    currentPage = widget.pageNotifier.value;
     children = widget.children.map((c) => RepaintBoundary(child: c)).toList();
 
     controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 300), lowerBound: 0, upperBound: 1.0);
@@ -138,18 +125,20 @@ class _CustomPageViewState extends State<CustomPageView> with SingleTickerProvid
       }
     });
 
-    selectorHandler.appGridPage.listen((newPage) {
+    widget.pageNotifier.addListener(() {
+      int newPage = widget.pageNotifier.value;
+
       if (newPage == currentPage) {
         return;
       }
 
       if (newPage > widget.children.length - 1) {
-        selectorHandler.appGridPage.value = widget.children.length - 1;
+        widget.pageNotifier.value = widget.children.length - 1;
         return;
       }
 
       if (newPage < 0) {
-        selectorHandler.appGridPage.value = 0;
+        widget.pageNotifier.value = 0;
 
         return;
       }
@@ -166,7 +155,7 @@ class _CustomPageViewState extends State<CustomPageView> with SingleTickerProvid
   }
 
   void setPage(int page) {
-    selectorHandler.appGridPage.value = page;
+    widget.pageNotifier.value = page;
     setState(() => currentPage = page);
   }
 
@@ -210,20 +199,24 @@ class _CustomPageViewState extends State<CustomPageView> with SingleTickerProvid
           controller.animateTo(0, duration: Duration(milliseconds: 300));
           return;
         }
+        int timeLeft = 300 - (300 * controller.value).toInt();
         if (controller.value > 0.5) {
-          controller.animateTo(1, duration: Duration(milliseconds: 200));
+          controller.animateTo(1, duration: Duration(milliseconds: timeLeft));
         } else {
-          controller.animateTo(0, duration: Duration(milliseconds: 200));
+          controller.animateTo(0, duration: Duration(milliseconds: timeLeft));
         }
       },
-      child: CustomPage(
-        width: widget.constraints.maxWidth,
-        height: widget.constraints.maxHeight,
-        directionNotifier: direction,
-        controller: controller,
-        currentPage: currentPage,
-
-        children: children,
+      child: AnimatedBuilder(
+        animation: controller,
+        child: CustomPage(
+          width: widget.constraints.maxWidth,
+          height: widget.constraints.maxHeight,
+          directionNotifier: direction,
+          controller: controller,
+          currentPage: currentPage,
+          children: children,
+        ),
+        builder: (_, child) => child!,
       ),
     );
   }

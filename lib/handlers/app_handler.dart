@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:classiclauncher/handlers/config_handler.dart';
 import 'package:classiclauncher/models/app_info.dart';
@@ -9,7 +8,6 @@ import 'package:classiclauncher/utils/constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:path_provider/path_provider.dart';
 
 class AppHandler extends GetxController {
   static const MethodChannel methodChannel = MethodChannel('com.noaisu.classicLauncher/app');
@@ -18,6 +16,7 @@ class AppHandler extends GetxController {
   Rx<Uint8List?> wallpaper = Rx(null);
   Rx<AppInfo?> loliSnatcher = Rx(null);
   RxBool writingAppList = false.obs;
+  RxBool editingApps = false.obs;
   ConfigHandler configHandler = Get.find<ConfigHandler>();
 
   Timer? _timer;
@@ -158,9 +157,20 @@ class AppHandler extends GetxController {
     writingAppList.value = true;
     List<AppInfo> newAppList = [...installedApps];
 
+    int currentIndex = installedApps.indexOf(app);
+
+    if (currentIndex == appPosition) {
+      print("tried moving ${app.packageName} to same position $currentIndex");
+      return;
+    }
+
     newAppList.remove(app);
     newAppList.insert(appPosition, app);
-    installedApps.refresh();
+    print("move ${app.packageName} from $currentIndex to $appPosition");
+
+    if (newAppList == installedApps) {
+      return;
+    }
 
     installedApps.value = newAppList;
 
@@ -222,5 +232,13 @@ class AppHandler extends GetxController {
     }
     // File(result+"/test.txt").create(recursive: true);
     return result;
+  }
+
+  Future<void> openWallpaperPicker() async {
+    try {
+      await methodChannel.invokeMethod('openWallpaperPicker');
+    } catch (e, stackTrace) {
+      print("Failed to set wallpaper $e, $stackTrace");
+    }
   }
 }

@@ -131,6 +131,14 @@ class MainActivity : FlutterActivity() {
               }
           }
 
+              "openWallpaperPicker" -> {
+           
+                  CoroutineScope(Dispatchers.Main).launch {
+                   openWallpaperPicker()
+                        result.success(null)}
+         
+          }
+
 
          /* "getWallpaper" -> {
               CoroutineScope(Dispatchers.Main).launch {
@@ -171,6 +179,11 @@ class MainActivity : FlutterActivity() {
         }
 
         startActivityForResult(intent, 1)
+    }
+
+     suspend fun openWallpaperPicker() {
+         val intent = Intent(Intent.ACTION_SET_WALLPAPER)
+         startActivity(intent)
     }
 
     suspend fun getFileBytesFromUri(uriString: String): ByteArray? {
