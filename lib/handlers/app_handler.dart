@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-class AppHandler extends GetxController {
+class AppHandler extends GetxController with WidgetsBindingObserver {
   static const MethodChannel methodChannel = MethodChannel('com.noaisu.classicLauncher/app');
   RxList<AppInfo> installedApps = RxList();
   RxList<String> appPositions = RxList();
@@ -22,14 +22,37 @@ class AppHandler extends GetxController {
 
   Timer? _timer;
 
+  static const EventChannel packageEventChannel = EventChannel('com.noaisu.classicLauncher/packages');
+  StreamSubscription? _packageEventSub;
+
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     getAppPositions();
     getAppList();
     _timer = Timer.periodic(Duration(seconds: 30), (_) {
       getAppList();
     });
+    _packageEventSub = packageEventChannel.receiveBroadcastStream().listen((event) {
+      getAppList();
+    });
+  }
+
+  @override
+  void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _timer?.cancel();
+    _packageEventSub?.cancel();
+    super.onClose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Keep as fallback in case the broadcast receiver misses an event.
+    if (state == AppLifecycleState.resumed) {
+      getAppList();
+    }
   }
 
   Future<Uint8List> loadAssetBytes(String assetPath) async {
@@ -125,6 +148,15 @@ class AppHandler extends GetxController {
       bool? result = await methodChannel.invokeMethod<bool>('launchApp', {"packageName": app.packageName});
     } on PlatformException catch (e, stackTrace) {
       print("Failed to launch app $e, $stackTrace");
+    }
+  }
+
+  Future<void> uninstallApp(AppInfo app) async {
+    if (app.packageName == "classiclauncher.internal.settings") return;
+    try {
+      await methodChannel.invokeMethod('uninstallApp', {"packageName": app.packageName});
+    } on PlatformException catch (e, stackTrace) {
+      print("Failed to uninstall app $e, $stackTrace");
     }
   }
 

@@ -71,6 +71,12 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
   }
 
   void startEdit(bool dragging) {
+    if (appGridHandler.editing.value && dragging) {
+      // Already in wobble — just start the drag on this card.
+      appGridHandler.dragging.value = true;
+      appGridHandler.moving.value = widget.appInfo;
+      return;
+    }
     if (appGridHandler.editing.value) {
       return;
     }
@@ -81,18 +87,18 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
   }
 
   void onDropApp() async {
-    appGridHandler.stopEdit();
+    final int? moveCol = appGridHandler.appMoveCol;
+    final int? moveRow = appGridHandler.appMoveRow;
 
-    if (appGridHandler.appMoveCol == null && appGridHandler.appMoveRow == null) {
+    appGridHandler.stopDrag();
+
+    if (moveCol == null || moveRow == null) {
       return;
     }
 
     int appsPerPage = themeHandler.theme.value.appGridTheme.appsPerPage;
-
-    int pageStart = 0 + (appsPerPage * appGridHandler.pageNotifier.value);
-
-    int offset = (appGridHandler.appMoveRow! * themeHandler.theme.value.appGridTheme.columns) + appGridHandler.appMoveCol!;
-
+    int pageStart = appsPerPage * appGridHandler.pageNotifier.value;
+    int offset = (moveRow * themeHandler.theme.value.appGridTheme.columns) + moveCol;
     int appPosition = pageStart + offset;
 
     await appHandler.moveApp(appPosition: appPosition, app: widget.appInfo);
@@ -144,63 +150,71 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
         child: AnimatedBuilder(
         animation: controller,
         builder: (_, __) {
+          final bool editing = appGridHandler.editing.value;
+          final bool isSystem = widget.appInfo.packageName == "classiclauncher.internal.settings";
+
           return Transform.scale(
             scale: scaleAnimation.value,
-            child: Container(
-              key: ValueKey("AppCard::${widget.appInfo.packageName}::${widget.width}::${widget.height}"),
-              width: widget.width,
-              height: widget.height,
-              decoration: themeHandler.theme.value.appGridTheme.appCardDecoration,
-              child: SelectableContainer(
-                selectableKey: "${widget.selectableKey}_$_cachedAppIndex",
-                selectorTheme: themeHandler.theme.value.appGridTheme.selectorTheme,
-                canLongPress: () {
-                  return !appGridHandler.editing.value;
-                },
-
-                onTapDown: (details) {
-                  setState(() {
-                    isFingerDown = true;
-                  });
-                },
-                onTapUp: (details) {
-                  setState(() {
-                    isFingerDown = false;
-                  });
-                },
-                onTap: () {
-                  if (appGridHandler.editing.value) {
-                    appGridHandler.stopEdit();
-                    return;
-                  }
-                  appHandler.launchApp(widget.appInfo);
-                },
-                onLongPress: isFingerDown
-                    ? null
-                    : () {
-                        startEdit(false);
-                      },
-                child: Obx(() {
-                  if (appGridHandler.moving.value == widget.appInfo && appGridHandler.editing.value && appGridHandler.dragging.value) {
-                    return SizedBox.shrink();
-                  }
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Padding(
-                        padding: themeHandler.theme.value.appGridTheme.appCardIconPadding,
-                        child: ShadowedImage(
-                          width: themeHandler.theme.value.appGridTheme.iconSize,
-                          height: themeHandler.theme.value.appGridTheme.iconSize,
-                          imageBytes: widget.appInfo.icon,
-                        ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  key: ValueKey("AppCard::${widget.appInfo.packageName}::${widget.width}::${widget.height}"),
+                  width: widget.width,
+                  height: widget.height,
+                  decoration: themeHandler.theme.value.appGridTheme.appCardDecoration,
+                  child: SelectableContainer(
+                    selectableKey: "${widget.selectableKey}_$_cachedAppIndex",
+                    selectorTheme: themeHandler.theme.value.appGridTheme.selectorTheme,
+                    canLongPress: () => !appGridHandler.editing.value,
+                    onTapDown: (details) => setState(() => isFingerDown = true),
+                    onTapUp: (details) => setState(() => isFingerDown = false),
+                    onTap: () {
+                      if (appGridHandler.editing.value) {
+                        appHandler.uninstallApp(widget.appInfo);
+                        return;
+                      }
+                      appHandler.launchApp(widget.appInfo);
+                    },
+                    onLongPress: isFingerDown ? null : () => startEdit(false),
+                    child: Obx(() {
+                      if (appGridHandler.moving.value == widget.appInfo && appGridHandler.editing.value && appGridHandler.dragging.value) {
+                        return SizedBox.shrink();
+                      }
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: themeHandler.theme.value.appGridTheme.appCardIconPadding,
+                            child: ShadowedImage(
+                              width: themeHandler.theme.value.appGridTheme.iconSize,
+                              height: themeHandler.theme.value.appGridTheme.iconSize,
+                              imageBytes: widget.appInfo.icon,
+                            ),
+                          ),
+                          Text(widget.appInfo.title, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: themeHandler.theme.value.appGridTheme.appCardTextStyle),
+                        ],
+                      );
+                    }),
+                  ),
+                ),
+                // Uninstall button — outside the clipped Container so it renders over the corner
+                if (editing && !isSystem)
+                  Positioned(
+                    top: -4,
+                    left: -4,
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
                       ),
-                      Text(widget.appInfo.title, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: themeHandler.theme.value.appGridTheme.appCardTextStyle),
-                    ],
-                  );
-                }),
-              ),
+                      child: const Icon(Icons.close, color: Colors.white, size: 13),
+                    ),
+                  ),
+              ],
             ),
           );
         },

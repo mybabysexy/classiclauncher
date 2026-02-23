@@ -7,6 +7,8 @@ class CustomPageView extends StatefulWidget {
   final ValueNotifier<int> pageNotifier;
   /// Notifier updated immediately when a target page is decided (before animation ends).
   final ValueNotifier<int>? targetPageNotifier;
+  /// Called the moment a horizontal swipe gesture starts.
+  final VoidCallback? onSwipeStart;
 
   const CustomPageView({
     super.key,
@@ -14,6 +16,7 @@ class CustomPageView extends StatefulWidget {
     required this.children,
     required this.pageNotifier,
     this.targetPageNotifier,
+    this.onSwipeStart,
   });
 
   @override
@@ -140,6 +143,7 @@ class _CustomPageViewState extends State<CustomPageView> with SingleTickerProvid
       onHorizontalDragStart: (details) {
         _controller.stop();
         _dragStartOffset = _offset;
+        widget.onSwipeStart?.call();
       },
       onHorizontalDragUpdate: (details) {
         if (width == 0) return;

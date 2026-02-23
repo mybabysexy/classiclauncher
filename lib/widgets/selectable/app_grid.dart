@@ -272,15 +272,23 @@ class _AppGridState extends State<AppGrid> implements SelectableZone {
       child: Stack(
         children: [
           AppDragOverlay(width: widget.constraints.maxWidth, height: widget.constraints.maxHeight),
-          Obx(
-            () => IgnorePointer(
-              ignoring: appGridHandler.editing.value,
-              child: CustomPageView(
-                constraints: widget.constraints,
-                pageNotifier: appGridHandler.pageNotifier,
-                targetPageNotifier: appGridHandler.targetPageNotifier,
-                children: buildPages((apps.length / appsPerPage).ceil()),
-              ),
+          GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () {
+              if (appGridHandler.editing.value && !appGridHandler.dragging.value) {
+                appGridHandler.stopEdit();
+              }
+            },
+            child: CustomPageView(
+              constraints: widget.constraints,
+              pageNotifier: appGridHandler.pageNotifier,
+              targetPageNotifier: appGridHandler.targetPageNotifier,
+              onSwipeStart: () {
+                if (appGridHandler.editing.value && !appGridHandler.dragging.value) {
+                  appGridHandler.stopEdit();
+                }
+              },
+              children: buildPages((apps.length / appsPerPage).ceil()),
             ),
           ),
         ],

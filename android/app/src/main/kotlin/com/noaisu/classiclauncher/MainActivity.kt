@@ -43,11 +43,29 @@ import java.io.OutputStream
 class MainActivity : FlutterActivity() {
     private val METHODCHANNEL = "com.noaisu.classicLauncher/app"
     private val EVENTCHANNEL = "com.noaisu.classicLauncher/input"
+    private val PACKAGEEVENTCHANNEL = "com.noaisu.classicLauncher/packages"
     private var eventSink: EventChannel.EventSink? = null
-  override fun getRenderMode() = RenderMode.texture
-  override fun getTransparencyMode() = TransparencyMode.transparent
+    private var packageEventSink: EventChannel.EventSink? = null
+    override fun getRenderMode() = RenderMode.texture
+    override fun getTransparencyMode() = TransparencyMode.transparent
     private var methodResult: MethodChannel.Result? = null
     private var SAFUri: String? = ""
+
+    private val packageReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: Intent?) {
+            val action = intent?.action ?: return
+            val packageName = intent.data?.schemeSpecificPart ?: return
+            val event = when (action) {
+                Intent.ACTION_PACKAGE_ADDED -> "added:$packageName"
+                Intent.ACTION_PACKAGE_REMOVED -> "removed:$packageName"
+                Intent.ACTION_PACKAGE_REPLACED -> "replaced:$packageName"
+                else -> return
+            }
+            CoroutineScope(Dispatchers.Main).launch {
+                packageEventSink?.success(event)
+            }
+        }
+    }
 
   override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
     super.configureFlutterEngine(flutterEngine)
@@ -132,11 +150,23 @@ class MainActivity : FlutterActivity() {
           }
 
               "openWallpaperPicker" -> {
-           
                   CoroutineScope(Dispatchers.Main).launch {
                    openWallpaperPicker()
                         result.success(null)}
-         
+          }
+
+          "uninstallApp" -> {
+              val packageName = call.argument<String>("packageName")
+              if (packageName != null) {
+                  CoroutineScope(Dispatchers.Main).launch {
+                      val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE, Uri.parse("package:$packageName"))
+                      intent.putExtra(Intent.EXTRA_RETURN_RESULT, false)
+                      startActivity(intent)
+                      result.success(true)
+                  }
+              } else {
+                  result.error("INVALID_ARGUMENT", "packageName is null", null)
+              }
           }
 
 
@@ -158,12 +188,38 @@ class MainActivity : FlutterActivity() {
               override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
                   eventSink = events
               }
-
               override fun onCancel(arguments: Any?) {
                   eventSink = null
               }
           }
       )
+
+      EventChannel(flutterEngine.dartExecutor.binaryMessenger, PACKAGEEVENTCHANNEL).setStreamHandler(
+          object : EventChannel.StreamHandler {
+              override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+                  packageEventSink = events
+              }
+              override fun onCancel(arguments: Any?) {
+                  packageEventSink = null
+              }
+          }
+      )
+  }
+
+  override fun onStart() {
+      super.onStart()
+      val filter = android.content.IntentFilter().apply {
+          addAction(Intent.ACTION_PACKAGE_ADDED)
+          addAction(Intent.ACTION_PACKAGE_REMOVED)
+          addAction(Intent.ACTION_PACKAGE_REPLACED)
+          addDataScheme("package")
+      }
+      registerReceiver(packageReceiver, filter)
+  }
+
+  override fun onStop() {
+      super.onStop()
+      try { unregisterReceiver(packageReceiver) } catch (_: Exception) {}
   }
 
     private fun getFileUri() {

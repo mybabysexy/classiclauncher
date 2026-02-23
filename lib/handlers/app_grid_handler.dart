@@ -6,7 +6,7 @@ import 'package:classiclauncher/selection/key_input_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class AppGridHandler extends GetxController {
+class AppGridHandler extends GetxController with WidgetsBindingObserver {
   final RxBool editing = RxBool(false);
   final Rx<AppInfo?> moving = Rx(null);
   final RxBool dragging = RxBool(false);
@@ -25,14 +25,7 @@ class AppGridHandler extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
-    ever(editing, (_) {
-      if (editing.value) {
-        print("editng started");
-        return;
-      }
-      print("editng ended");
-    });
+    WidgetsBinding.instance.addObserver(this);
 
     inputSub = Get.find<KeyInputHandler>().keyStream.listen((keyPress) {
       if (keyPress.input == Input.back && editing.value) {
@@ -41,11 +34,39 @@ class AppGridHandler extends GetxController {
     });
   }
 
+  @override
+  void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.onClose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      if (editing.value) {
+        stopEdit();
+      }
+    }
+  }
+
+  /// Ends the active drag but keeps wobble (editing) mode alive.
+  void stopDrag() {
+    dragging.value = false;
+    moving.value = null;
+    fingerX.value = null;
+    fingerY.value = null;
+    appMoveCol = null;
+    appMoveRow = null;
+  }
+
   void stopEdit() {
     moving.value = null;
+    dragging.value = false;
     editing.value = false;
     fingerX.value = null;
     fingerY.value = null;
+    appMoveCol = null;
+    appMoveRow = null;
   }
 
   void clearTimer() {

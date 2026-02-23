@@ -17,80 +17,52 @@ class _AppDragOverlayState extends State<AppDragOverlay> {
   final AppHandler appHandler = Get.find<AppHandler>();
   final ThemeHandler themeHandler = Get.find<ThemeHandler>();
   final AppGridHandler appGridHandler = Get.find<AppGridHandler>();
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (!appGridHandler.editing.value) {
+      if (!appGridHandler.editing.value || !appGridHandler.dragging.value) {
         return SizedBox.shrink();
       }
-      if (appGridHandler.fingerX.value == null && appGridHandler.fingerY.value == null) {
+      if (appGridHandler.fingerX.value == null || appGridHandler.fingerY.value == null) {
         return SizedBox.shrink();
       }
 
-      // add one to colums as we want the number of spaces beteen
-      int columns = themeHandler.theme.value.appGridTheme.columns + 1;
-      int rows = themeHandler.theme.value.appGridTheme.rows;
-      double columnSpace = themeHandler.theme.value.appGridTheme.columnSpacing;
-      double rowSpace = themeHandler.theme.value.appGridTheme.rowSpacing;
-      EdgeInsets appGridPadding = themeHandler.theme.value.appGridTheme.appGridOutterPadding;
-      double boxWidth = themeHandler.getCardWidth(gridWidth: widget.width);
-      double boxHeight = themeHandler.getCardHeight(gridHeight: widget.height);
-      double columnStride = boxWidth + columnSpace;
+      final int columns = themeHandler.theme.value.appGridTheme.columns;
+      final int rows = themeHandler.theme.value.appGridTheme.rows;
+      final double columnSpace = themeHandler.theme.value.appGridTheme.columnSpacing;
+      final double rowSpace = themeHandler.theme.value.appGridTheme.rowSpacing;
+      final EdgeInsets padding = themeHandler.theme.value.appGridTheme.appGridOutterPadding;
+      final double boxWidth = themeHandler.getCardWidth(gridWidth: widget.width);
+      final double boxHeight = themeHandler.getCardHeight(gridHeight: widget.height);
+      final double columnStride = boxWidth + columnSpace;
+      final double rowStride = boxHeight + rowSpace;
 
-      double x = appGridHandler.fingerX.value!;
-      double y = appGridHandler.fingerY.value!;
+      final double x = appGridHandler.fingerX.value! - padding.left;
+      final double y = appGridHandler.fingerY.value!;
 
-      double rowStride = boxHeight + rowSpace;
+      // Determine which cell the finger is over.
+      final int col = (x / columnStride).floor().clamp(0, columns - 1);
+      final int row = (y / rowStride).floor().clamp(0, rows - 1);
 
-      double cellStartX(int col) => appGridPadding.left + (col * (boxWidth + columnSpace));
-      double cellEndX(int col) => cellStartX(col) + boxWidth;
-      double rowStartY(int row) => row * (boxHeight + rowSpace);
-      double rowEndY(int row) => rowStartY(row) + boxHeight;
+      // Set the move target — read by onDropApp before stopEdit clears them.
+      appGridHandler.appMoveCol = col;
+      appGridHandler.appMoveRow = row;
 
-      const double snapThreshold = 30;
-      const double indicatorWidth = 10.0;
-
-      int column = (x / columnStride).ceil();
-      int row = (y / rowStride).floor();
-
-      final double gapCenterX = column * columnStride - (columnSpace / 2);
-
-      bool locked = false;
-
-      if (x >= (gapCenterX - snapThreshold) && x <= (gapCenterX + snapThreshold)) {
-        x = gapCenterX - indicatorWidth / 2;
-        locked = true;
-      }
-
-      x += appGridPadding.left;
-
-      //int nearestRow =
-
-      print("finger is in column: $column ,  row: $row, locked $locked");
-
-      appGridHandler.appMoveCol = locked ? column : null;
-      appGridHandler.appMoveRow = locked ? row : null;
+      // Indicator shown at the left edge of the hovered cell.
+      final double indicatorLeft = padding.left + col * columnStride - columnSpace / 2 + 2;
+      final double indicatorTop = row * rowStride;
 
       return SizedBox(
         width: widget.width,
         height: widget.height,
         child: Stack(
           children: [
-            /* for (int u = 0; u < rows; u++)
-              for (int i = 0; i <= columns; i++)
-                Positioned(
-                  top: rowStartY(u),
-                  height: boxHeight,
-                  left: cellStartX(i) - (columnSpace / 2),
-                  width: 5,
-                  child: Container(color: Colors.black),
-                ),*/
             Positioned(
-              top: rowStartY(row),
+              top: indicatorTop,
               height: boxHeight,
-              left: x + 3,
+              left: indicatorLeft,
               width: 6,
-
               child: Container(decoration: themeHandler.theme.value.appGridTheme.selectorTheme.decoration),
             ),
           ],
