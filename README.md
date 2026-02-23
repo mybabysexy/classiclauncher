@@ -5,3 +5,8 @@ A BBOS 10 Style Launcher, tested on Zinwa Q25
 
 
 ![github-small](https://github.com/NO-ob/classiclauncher/blob/master/Screenshot_20260219-000933.png?raw=true)
+![github-small](https://github.com/NO-ob/classiclauncher/blob/master/Screenshot_20260223-000254.png?raw=true)
+
+
+
+
