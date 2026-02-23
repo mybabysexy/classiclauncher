@@ -45,7 +45,7 @@ class AppGridTheme extends Equatable {
     this.appGridEdgeHoverZoneWidth = 70,
     this.appGridEdgeHoverDuration = const Duration(milliseconds: 2500),
     this.appGridOutterPadding = const EdgeInsets.only(left: 24, right: 24, top: 0, bottom: 12),
-    this.appCardIconPadding = const EdgeInsets.only(bottom: 20, left: 8, right: 8, top: 8),
+    this.appCardIconPadding = const EdgeInsets.only(bottom: 14, left: 8, right: 8, top: 8),
     this.appCardBackgroundColour,
     this.appCardGradient,
     this.cornerRadius = 0,

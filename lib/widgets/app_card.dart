@@ -31,8 +31,12 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
   late StreamSubscription<bool> sub;
   late Animation<double> scaleAnimation;
   bool isFingerDown = false;
+  // Cache the app index to avoid O(n) indexOf calls inside AnimatedBuilder
+  late int _cachedAppIndex;
+
   @override
   void initState() {
+    _cachedAppIndex = appHandler.installedApps.indexOf(widget.appInfo);
     controller = AnimationController(vsync: this, duration: Duration(milliseconds: 800));
 
     scaleAnimation = Tween<double>(begin: 1, end: 0.8).animate(CurvedAnimation(parent: controller, curve: Curves.easeInOut));
@@ -45,8 +49,15 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
   void dispose() {
     sub.cancel();
     controller.dispose();
-
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(AppCard old) {
+    super.didUpdateWidget(old);
+    if (old.appInfo != widget.appInfo) {
+      _cachedAppIndex = appHandler.installedApps.indexOf(widget.appInfo);
+    }
   }
 
   void onEditChange(bool editing) {
@@ -129,18 +140,19 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
           ),
         ),
       ),
-      child: AnimatedBuilder(
+      child: RepaintBoundary(
+        child: AnimatedBuilder(
         animation: controller,
         builder: (_, __) {
           return Transform.scale(
             scale: scaleAnimation.value,
             child: Container(
-              key: ValueKey("AppCard::${widget.appInfo.packageName}::${widget.width}::${widget.height}${appHandler.installedApps.indexOf(widget.appInfo)}"),
+              key: ValueKey("AppCard::${widget.appInfo.packageName}::${widget.width}::${widget.height}"),
               width: widget.width,
               height: widget.height,
               decoration: themeHandler.theme.value.appGridTheme.appCardDecoration,
               child: SelectableContainer(
-                selectableKey: "${widget.selectableKey}_${appHandler.installedApps.indexOf(widget.appInfo)}",
+                selectableKey: "${widget.selectableKey}_$_cachedAppIndex",
                 selectorTheme: themeHandler.theme.value.appGridTheme.selectorTheme,
                 canLongPress: () {
                   return !appGridHandler.editing.value;
@@ -192,6 +204,7 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
             ),
           );
         },
+      ),
       ),
     );
   }

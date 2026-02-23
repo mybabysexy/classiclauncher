@@ -125,7 +125,14 @@ class _MyHomePageState extends State<MyHomePage> {
                                           (appHandler.installedApps.length /
                                                   (themeHandler.theme.value.appGridTheme.rows * themeHandler.theme.value.appGridTheme.columns))
                                               .ceil();
-                                      return PageIndicators(selected: appGridHandler.pageNotifier, pageCount: pageCount);
+                                      return PageIndicators(
+                                        selected: appGridHandler.targetPageNotifier,
+                                        pageCount: pageCount,
+                                        onPageSelected: (page) {
+                                          appGridHandler.targetPageNotifier.value = page;
+                                          appGridHandler.pageNotifier.value = page;
+                                        },
+                                      );
                                     }),
                                   ],
                                 ),

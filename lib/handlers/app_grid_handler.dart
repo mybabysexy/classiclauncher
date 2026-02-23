@@ -19,6 +19,8 @@ class AppGridHandler extends GetxController {
   Rx<double?> fingerY = Rx(null);
 
   ValueNotifier<int> pageNotifier = ValueNotifier(0);
+  /// Updated immediately when a swipe target is decided, before the animation finishes.
+  ValueNotifier<int> targetPageNotifier = ValueNotifier(0);
 
   @override
   void onInit() {

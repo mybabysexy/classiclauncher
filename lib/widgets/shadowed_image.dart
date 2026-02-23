@@ -22,7 +22,8 @@ class _ShadowedImageState extends State<ShadowedImage> {
       return SizedBox(height: widget.height, width: widget.width);
     }
 
-    return SizedBox(
+    return RepaintBoundary(
+      child: SizedBox(
       height: widget.height,
       width: widget.width,
       child: Stack(
@@ -53,6 +54,7 @@ class _ShadowedImageState extends State<ShadowedImage> {
                 : Image.memory(widget.imageBytes!, fit: BoxFit.contain, gaplessPlayback: true, color: widget.colour),
           ),
         ],
+      ),
       ),
     );
   }

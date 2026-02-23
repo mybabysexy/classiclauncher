@@ -278,6 +278,7 @@ class _AppGridState extends State<AppGrid> implements SelectableZone {
               child: CustomPageView(
                 constraints: widget.constraints,
                 pageNotifier: appGridHandler.pageNotifier,
+                targetPageNotifier: appGridHandler.targetPageNotifier,
                 children: buildPages((apps.length / appsPerPage).ceil()),
               ),
             ),

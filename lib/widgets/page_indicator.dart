@@ -7,8 +7,9 @@ enum IndicatorShape { circle, squircle }
 class PageIndicators extends StatefulWidget {
   final int pageCount;
   final ValueNotifier<int> selected;
+  final void Function(int page)? onPageSelected;
 
-  const PageIndicators({super.key, required this.selected, required this.pageCount});
+  const PageIndicators({super.key, required this.selected, required this.pageCount, this.onPageSelected});
 
   @override
   State<PageIndicators> createState() => _PageIndicatorsState();
@@ -17,22 +18,32 @@ class PageIndicators extends StatefulWidget {
 class _PageIndicatorsState extends State<PageIndicators> {
   ThemeHandler themeHandler = Get.find<ThemeHandler>();
   late int selected;
+  final GlobalKey _rowKey = GlobalKey();
 
   @override
   void initState() {
     selected = widget.selected.value;
 
     widget.selected.addListener(() {
-      if (widget.selected.value != selected) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          setState(() {
-            selected = widget.selected.value;
-          });
+      if (widget.selected.value != selected && mounted) {
+        setState(() {
+          selected = widget.selected.value;
         });
       }
     });
     super.initState();
+  }
+
+  void _selectFromLocalX(double localX) {
+    final RenderBox? box = _rowKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+
+    final double totalWidth = box.size.width;
+    final double dotWidth = totalWidth / widget.pageCount;
+    final int page = (localX / dotWidth).floor().clamp(0, widget.pageCount - 1);
+    if (page != selected) {
+      widget.onPageSelected?.call(page);
+    }
   }
 
   @override
@@ -41,14 +52,20 @@ class _PageIndicatorsState extends State<PageIndicators> {
     int dotCount = widget.pageCount.clamp(0, maxDots);
     int activeDot = selected % maxDots;
 
-    return Row(
-      children: [
-        for (int i = 0; i < dotCount; i++)
-          Padding(
-            padding: EdgeInsets.only(right: i == dotCount - 1 ? 0 : themeHandler.theme.value.pageIndicatorTheme.pageIndicatorSpacing),
-            child: PageIndicator(key: ValueKey("PageIndicators::$i"), pageNumber: i == activeDot ? selected : i, selected: i == activeDot),
-          ),
-      ],
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTapDown: (details) => _selectFromLocalX(details.localPosition.dx),
+      onHorizontalDragUpdate: (details) => _selectFromLocalX(details.localPosition.dx),
+      child: Row(
+        key: _rowKey,
+        children: [
+          for (int i = 0; i < dotCount; i++)
+            Padding(
+              padding: EdgeInsets.only(right: i == dotCount - 1 ? 0 : themeHandler.theme.value.pageIndicatorTheme.pageIndicatorSpacing),
+              child: PageIndicator(key: ValueKey("PageIndicators::$i"), pageNumber: i == activeDot ? selected : i, selected: i == activeDot),
+            ),
+        ],
+      ),
     );
   }
 }
