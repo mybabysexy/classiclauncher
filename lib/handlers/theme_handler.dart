@@ -20,7 +20,7 @@ class ThemeHandler extends GetxController {
   void onInit() {
     LauncherTheme launcherTheme = LauncherTheme();
     //q10 theme
-    theme.value = LauncherTheme().copyWith(
+    /* theme.value = LauncherTheme().copyWith(
       pageIndicatorTheme: launcherTheme.pageIndicatorTheme.copyWith(
         indicatorShape: IndicatorShape.squircle,
         pageIndicatorActiveSize: 22,
@@ -36,9 +36,9 @@ class ThemeHandler extends GetxController {
         appCardGradient: LinearGradient(colors: [Colors.black12, Colors.black54], begin: AlignmentGeometry.topCenter, end: AlignmentGeometry.bottomCenter),
         cornerRadius: 12,
       ),
-    );
+    );*/
     super.onInit();
-    //  loadThemeFromStorage();
+    loadThemeFromStorage();
   }
 
   void loadThemeFromStorage() async {
