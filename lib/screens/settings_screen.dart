@@ -51,7 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   zoneIndex: 0,
                   zoneKey: "Settings",
                   axis: Axis.vertical,
-                  childCount: 4,
+                  childCount: 6,
                   childBuilder: (index, key) {
                     switch (index) {
                       case 0:
@@ -90,6 +90,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           },
                           title: "Set wallpaper",
                           body: "Choose a wallpaper",
+                        );
+                      case 4:
+                        return SettingsCard(
+                          selectableKey: "${key}_$index",
+                          onTap: () async {
+                            appHandler.exportAppOrder();
+                          },
+                          title: "Export App Order",
+                          body: "Export the order of your apps",
+                        );
+                      case 5:
+                        return SettingsCard(
+                          selectableKey: "${key}_$index",
+                          onTap: () async {
+                            appHandler.importAppOrder();
+                          },
+                          title: "Import App Order",
+                          body: "Import the order of your apps",
                         );
                       default:
                         return SizedBox.shrink();

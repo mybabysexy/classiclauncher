@@ -9,6 +9,8 @@ part of 'app_grid_theme.dart';
 abstract class _$AppGridThemeCWProxy {
   AppGridTheme appCardFontSize(double appCardFontSize);
 
+  AppGridTheme appCardTextColour(Color? appCardTextColour);
+
   AppGridTheme appCardTextOutlineColour(Color appCardTextOutlineColour);
 
   AppGridTheme columns(int columns);
@@ -46,6 +48,7 @@ abstract class _$AppGridThemeCWProxy {
   /// ```
   AppGridTheme call({
     double appCardFontSize,
+    Color? appCardTextColour,
     Color appCardTextOutlineColour,
     int columns,
     int rows,
@@ -73,6 +76,10 @@ class _$AppGridThemeCWProxyImpl implements _$AppGridThemeCWProxy {
   @override
   AppGridTheme appCardFontSize(double appCardFontSize) =>
       call(appCardFontSize: appCardFontSize);
+
+  @override
+  AppGridTheme appCardTextColour(Color? appCardTextColour) =>
+      call(appCardTextColour: appCardTextColour);
 
   @override
   AppGridTheme appCardTextOutlineColour(Color appCardTextOutlineColour) =>
@@ -136,6 +143,7 @@ class _$AppGridThemeCWProxyImpl implements _$AppGridThemeCWProxy {
   /// ```
   AppGridTheme call({
     Object? appCardFontSize = const $CopyWithPlaceholder(),
+    Object? appCardTextColour = const $CopyWithPlaceholder(),
     Object? appCardTextOutlineColour = const $CopyWithPlaceholder(),
     Object? columns = const $CopyWithPlaceholder(),
     Object? rows = const $CopyWithPlaceholder(),
@@ -158,6 +166,10 @@ class _$AppGridThemeCWProxyImpl implements _$AppGridThemeCWProxy {
           ? _value.appCardFontSize
           // ignore: cast_nullable_to_non_nullable
           : appCardFontSize as double,
+      appCardTextColour: appCardTextColour == const $CopyWithPlaceholder()
+          ? _value.appCardTextColour
+          // ignore: cast_nullable_to_non_nullable
+          : appCardTextColour as Color?,
       appCardTextOutlineColour:
           appCardTextOutlineColour == const $CopyWithPlaceholder() ||
               appCardTextOutlineColour == null
@@ -246,6 +258,12 @@ extension $AppGridThemeCopyWith on AppGridTheme {
 
 AppGridTheme _$AppGridThemeFromJson(Map<String, dynamic> json) => AppGridTheme(
   appCardFontSize: (json['appCardFontSize'] as num?)?.toDouble() ?? 18,
+  appCardTextColour:
+      _$JsonConverterFromJson<String, Color>(
+        json['appCardTextColour'],
+        const ColourConverter().fromJson,
+      ) ??
+      const Color(0xFFe6e6e6),
   appCardTextOutlineColour: json['appCardTextOutlineColour'] == null
       ? Colors.black
       : const ColourConverter().fromJson(
@@ -317,6 +335,10 @@ Map<String, dynamic> _$AppGridThemeToJson(
     instance.appCardGradient,
     const GradientConverter().toJson,
   ),
+  'appCardTextColour': _$JsonConverterToJson<String, Color>(
+    instance.appCardTextColour,
+    const ColourConverter().toJson,
+  ),
 };
 
 const _$AppGridThemeJsonSchema = {
@@ -338,6 +360,7 @@ const _$AppGridThemeJsonSchema = {
     'cornerRadius': {'type': 'number', 'default': 0.0},
     'selectorTheme': {r'$ref': r'#/$defs/SelectorTheme'},
     'appCardGradient': {r'$ref': r'#/$defs/Gradient'},
+    'appCardTextColour': {r'$ref': r'#/$defs/Color'},
   },
   r'$defs': {
     'Color': {

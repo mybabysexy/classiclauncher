@@ -6,6 +6,7 @@ import 'package:classiclauncher/models/app_info.dart';
 import 'package:classiclauncher/screens/settings_screen.dart';
 import 'package:classiclauncher/utils/constants.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -239,6 +240,43 @@ class AppHandler extends GetxController {
       await methodChannel.invokeMethod('openWallpaperPicker');
     } catch (e, stackTrace) {
       print("Failed to set wallpaper $e, $stackTrace");
+    }
+  }
+
+  Future<void> exportAppOrder() async {
+    try {
+      final String? path = await getSAFDirectoryAccess();
+
+      if (path == null) {
+        return;
+      }
+
+      String fileName = 'appOrder_${DateTime.now()}';
+
+      await writeFile(utf8.encode(jsonEncode(appPositions)), fileName, 'text/json', 'json', path);
+
+      Get.snackbar("App order exported ( Ո‿Ո)", "saved to $fileName.json ...", backgroundColor: Colors.black54, colorText: Colors.white);
+    } catch (e, stackTrace) {
+      print("Failed to export app order $e,$stackTrace");
+      Get.snackbar("Failed to export app order ૮(˶ㅠ︿ㅠ)ა", "$e", backgroundColor: Colors.black54, colorText: Colors.white);
+    }
+  }
+
+  Future<void> importAppOrder() async {
+    try {
+      final String path = await getSAFUri();
+      Uint8List? bytes = await getSAFFile(path);
+      if (bytes == null) {
+        throw Exception("null bytes returning");
+      }
+      final List<String> newPositions = [...jsonDecode(utf8.decode(bytes))];
+
+      appPositions.value = newPositions;
+      Get.snackbar("App order imported ( Ո‿Ո)", "app order has been imported", backgroundColor: Colors.black54, colorText: Colors.white);
+      getAppList();
+    } catch (e, stackTrace) {
+      print("Failed to import app order $e,$stackTrace");
+      Get.snackbar("Failed to import app order ૮(˶ㅠ︿ㅠ)ა", "$e", backgroundColor: Colors.black54, colorText: Colors.white);
     }
   }
 }

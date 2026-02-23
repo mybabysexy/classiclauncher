@@ -34,7 +34,11 @@ class ColourConverter implements JsonConverter<Color, String> {
     final blue = int.parse(json.substring(9, 11), radix: 16);
     final alpha = int.parse(json.substring(11, 13), radix: 16);
 
-    return Color.fromARGB(alpha, red, green, blue);
+    Color colour = Color.fromARGB(alpha, red, green, blue);
+
+    print("Converted $json to $colour");
+
+    return colour;
   }
 
   String toHex(int val) {
@@ -48,7 +52,11 @@ class ColourConverter implements JsonConverter<Color, String> {
     int blue = (object.b * 255).round();
     int alpha = (object.a * 255).round();
 
-    return "RGBA#${toHex(red)}${toHex(green)}${toHex(blue)}${toHex(alpha)}";
+    String rgbaString = "RGBA#${toHex(red)}${toHex(green)}${toHex(blue)}${toHex(alpha)}";
+
+    print("Converting $object to $rgbaString");
+
+    return rgbaString;
   }
 }
 

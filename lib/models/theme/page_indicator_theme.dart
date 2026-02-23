@@ -17,6 +17,8 @@ class PageIndicatorTheme extends Equatable {
   @ColourConverter()
   final Color pageIndicatorTextColour;
   final IndicatorShape indicatorShape;
+  @ColourConverter()
+  final Color pageIndicatorColour;
 
   const PageIndicatorTheme({
     this.pageIndicatorInactiveSize = 12,
@@ -25,6 +27,7 @@ class PageIndicatorTheme extends Equatable {
     this.pageIndicatorFontSize = 14,
     this.pageIndicatorTextColour = Colors.black,
     this.indicatorShape = IndicatorShape.circle,
+    this.pageIndicatorColour = const Color(0xFFe6e6e6),
   });
 
   TextStyle get pageIndicatorTextStyle =>
@@ -38,6 +41,7 @@ class PageIndicatorTheme extends Equatable {
     pageIndicatorFontSize,
     pageIndicatorTextColour,
     indicatorShape,
+    pageIndicatorColour,
   ];
 
   /// Connect the generated [_$PageIndicatorThemeFromJson] function to the `fromJson`

@@ -30,9 +30,12 @@ class AppGridTheme extends Equatable {
   final SelectorTheme selectorTheme;
   @GradientConverter()
   final Gradient? appCardGradient;
+  @ColourConverter()
+  final Color? appCardTextColour;
 
   const AppGridTheme({
     this.appCardFontSize = 18,
+    this.appCardTextColour = const Color(0xFFe6e6e6),
     this.appCardTextOutlineColour = Colors.black,
     this.columns = 5,
     this.rows = 3,
@@ -79,6 +82,7 @@ class AppGridTheme extends Equatable {
     iconSize,
     appCardFontSize,
     appCardTextOutlineColour,
+    appCardTextColour,
     appGridOutterPadding,
     appCardIconPadding,
     columnSpacing,

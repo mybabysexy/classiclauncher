@@ -7,14 +7,6 @@ part of 'launcher_theme.dart';
 // **************************************************************************
 
 abstract class _$LauncherThemeCWProxy {
-  LauncherTheme uiPrimaryColour(Color uiPrimaryColour);
-
-  LauncherTheme navBarHeight(double navBarHeight);
-
-  LauncherTheme navBarSpacing(double navBarSpacing);
-
-  LauncherTheme navBarIconSize(double navBarIconSize);
-
   LauncherTheme longPressActionDuration(Duration longPressActionDuration);
 
   LauncherTheme appGridTheme(AppGridTheme appGridTheme);
@@ -22,6 +14,8 @@ abstract class _$LauncherThemeCWProxy {
   LauncherTheme pageIndicatorTheme(PageIndicatorTheme pageIndicatorTheme);
 
   LauncherTheme settingsTheme(SettingsTheme settingsTheme);
+
+  LauncherTheme navBarTheme(NavBarTheme navBarTheme);
 
   /// Creates a new instance with the provided field values.
   /// Passing `null` to a nullable field nullifies it, while `null` for a non-nullable field is ignored. To update a single field use `LauncherTheme(...).copyWith.fieldName(value)`.
@@ -31,14 +25,11 @@ abstract class _$LauncherThemeCWProxy {
   /// LauncherTheme(...).copyWith(id: 12, name: "My name")
   /// ```
   LauncherTheme call({
-    Color uiPrimaryColour,
-    double navBarHeight,
-    double navBarSpacing,
-    double navBarIconSize,
     Duration longPressActionDuration,
     AppGridTheme appGridTheme,
     PageIndicatorTheme pageIndicatorTheme,
     SettingsTheme settingsTheme,
+    NavBarTheme navBarTheme,
   });
 }
 
@@ -48,22 +39,6 @@ class _$LauncherThemeCWProxyImpl implements _$LauncherThemeCWProxy {
   const _$LauncherThemeCWProxyImpl(this._value);
 
   final LauncherTheme _value;
-
-  @override
-  LauncherTheme uiPrimaryColour(Color uiPrimaryColour) =>
-      call(uiPrimaryColour: uiPrimaryColour);
-
-  @override
-  LauncherTheme navBarHeight(double navBarHeight) =>
-      call(navBarHeight: navBarHeight);
-
-  @override
-  LauncherTheme navBarSpacing(double navBarSpacing) =>
-      call(navBarSpacing: navBarSpacing);
-
-  @override
-  LauncherTheme navBarIconSize(double navBarIconSize) =>
-      call(navBarIconSize: navBarIconSize);
 
   @override
   LauncherTheme longPressActionDuration(Duration longPressActionDuration) =>
@@ -82,6 +57,10 @@ class _$LauncherThemeCWProxyImpl implements _$LauncherThemeCWProxy {
       call(settingsTheme: settingsTheme);
 
   @override
+  LauncherTheme navBarTheme(NavBarTheme navBarTheme) =>
+      call(navBarTheme: navBarTheme);
+
+  @override
   /// Creates a new instance with the provided field values.
   /// Passing `null` to a nullable field nullifies it, while `null` for a non-nullable field is ignored. To update a single field use `LauncherTheme(...).copyWith.fieldName(value)`.
   ///
@@ -90,38 +69,13 @@ class _$LauncherThemeCWProxyImpl implements _$LauncherThemeCWProxy {
   /// LauncherTheme(...).copyWith(id: 12, name: "My name")
   /// ```
   LauncherTheme call({
-    Object? uiPrimaryColour = const $CopyWithPlaceholder(),
-    Object? navBarHeight = const $CopyWithPlaceholder(),
-    Object? navBarSpacing = const $CopyWithPlaceholder(),
-    Object? navBarIconSize = const $CopyWithPlaceholder(),
     Object? longPressActionDuration = const $CopyWithPlaceholder(),
     Object? appGridTheme = const $CopyWithPlaceholder(),
     Object? pageIndicatorTheme = const $CopyWithPlaceholder(),
     Object? settingsTheme = const $CopyWithPlaceholder(),
+    Object? navBarTheme = const $CopyWithPlaceholder(),
   }) {
     return LauncherTheme(
-      uiPrimaryColour:
-          uiPrimaryColour == const $CopyWithPlaceholder() ||
-              uiPrimaryColour == null
-          ? _value.uiPrimaryColour
-          // ignore: cast_nullable_to_non_nullable
-          : uiPrimaryColour as Color,
-      navBarHeight:
-          navBarHeight == const $CopyWithPlaceholder() || navBarHeight == null
-          ? _value.navBarHeight
-          // ignore: cast_nullable_to_non_nullable
-          : navBarHeight as double,
-      navBarSpacing:
-          navBarSpacing == const $CopyWithPlaceholder() || navBarSpacing == null
-          ? _value.navBarSpacing
-          // ignore: cast_nullable_to_non_nullable
-          : navBarSpacing as double,
-      navBarIconSize:
-          navBarIconSize == const $CopyWithPlaceholder() ||
-              navBarIconSize == null
-          ? _value.navBarIconSize
-          // ignore: cast_nullable_to_non_nullable
-          : navBarIconSize as double,
       longPressActionDuration:
           longPressActionDuration == const $CopyWithPlaceholder() ||
               longPressActionDuration == null
@@ -144,6 +98,11 @@ class _$LauncherThemeCWProxyImpl implements _$LauncherThemeCWProxy {
           ? _value.settingsTheme
           // ignore: cast_nullable_to_non_nullable
           : settingsTheme as SettingsTheme,
+      navBarTheme:
+          navBarTheme == const $CopyWithPlaceholder() || navBarTheme == null
+          ? _value.navBarTheme
+          // ignore: cast_nullable_to_non_nullable
+          : navBarTheme as NavBarTheme,
     );
   }
 }
@@ -161,12 +120,6 @@ extension $LauncherThemeCopyWith on LauncherTheme {
 
 LauncherTheme _$LauncherThemeFromJson(Map<String, dynamic> json) =>
     LauncherTheme(
-      uiPrimaryColour: json['uiPrimaryColour'] == null
-          ? const Color(0xFFe6e6e6)
-          : const ColourConverter().fromJson(json['uiPrimaryColour'] as String),
-      navBarHeight: (json['navBarHeight'] as num?)?.toDouble() ?? 82,
-      navBarSpacing: (json['navBarSpacing'] as num?)?.toDouble() ?? 16,
-      navBarIconSize: (json['navBarIconSize'] as num?)?.toDouble() ?? 48,
       longPressActionDuration: json['longPressActionDuration'] == null
           ? const Duration(milliseconds: 800)
           : Duration(
@@ -185,35 +138,33 @@ LauncherTheme _$LauncherThemeFromJson(Map<String, dynamic> json) =>
           : SettingsTheme.fromJson(
               json['settingsTheme'] as Map<String, dynamic>,
             ),
+      navBarTheme: json['navBarTheme'] == null
+          ? const NavBarTheme()
+          : NavBarTheme.fromJson(json['navBarTheme'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$LauncherThemeToJson(
   LauncherTheme instance,
 ) => <String, dynamic>{
-  'navBarHeight': instance.navBarHeight,
-  'navBarIconSize': instance.navBarIconSize,
-  'navBarSpacing': instance.navBarSpacing,
-  'uiPrimaryColour': const ColourConverter().toJson(instance.uiPrimaryColour),
   'longPressActionDuration': instance.longPressActionDuration.inMicroseconds,
   'appGridTheme': instance.appGridTheme,
   'pageIndicatorTheme': instance.pageIndicatorTheme,
   'settingsTheme': instance.settingsTheme,
+  'navBarTheme': instance.navBarTheme,
 };
 
 const _$LauncherThemeJsonSchema = {
   r'$schema': 'https://json-schema.org/draft/2020-12/schema',
   'type': 'object',
   'properties': {
-    'navBarHeight': {'type': 'number', 'default': 82.0},
-    'navBarIconSize': {'type': 'number', 'default': 48.0},
-    'navBarSpacing': {'type': 'number', 'default': 16.0},
-    'uiPrimaryColour': {r'$ref': r'#/$defs/Color'},
     'longPressActionDuration': {r'$ref': r'#/$defs/Duration'},
     'appGridTheme': {r'$ref': r'#/$defs/AppGridTheme'},
     'pageIndicatorTheme': {r'$ref': r'#/$defs/PageIndicatorTheme'},
     'settingsTheme': {r'$ref': r'#/$defs/SettingsTheme'},
+    'navBarTheme': {r'$ref': r'#/$defs/NavBarTheme'},
   },
   r'$defs': {
+    'Duration': {'type': 'object', 'properties': {}},
     'Color': {
       'type': 'object',
       'properties': {
@@ -221,7 +172,6 @@ const _$LauncherThemeJsonSchema = {
       },
       'required': ['value'],
     },
-    'Duration': {'type': 'object', 'properties': {}},
     'EdgeInsets': {'type': 'object', 'properties': {}},
     'SelectorTheme': {
       'type': 'object',
@@ -273,6 +223,7 @@ const _$LauncherThemeJsonSchema = {
         'cornerRadius': {'type': 'number', 'default': 0.0},
         'selectorTheme': {r'$ref': r'#/$defs/SelectorTheme'},
         'appCardGradient': {r'$ref': r'#/$defs/Gradient'},
+        'appCardTextColour': {r'$ref': r'#/$defs/Color'},
       },
     },
     'PageIndicatorTheme': {
@@ -284,6 +235,7 @@ const _$LauncherThemeJsonSchema = {
         'pageIndicatorFontSize': {'type': 'number', 'default': 14.0},
         'pageIndicatorTextColour': {r'$ref': r'#/$defs/Color'},
         'indicatorShape': {'type': 'object'},
+        'pageIndicatorColour': {r'$ref': r'#/$defs/Color'},
       },
     },
     'SettingsTheme': {
@@ -298,6 +250,15 @@ const _$LauncherThemeJsonSchema = {
         'menuItemBodySelectedTextColour': {r'$ref': r'#/$defs/Color'},
         'backgroundColour': {r'$ref': r'#/$defs/Color'},
         'selectorTheme': {r'$ref': r'#/$defs/SelectorTheme'},
+      },
+    },
+    'NavBarTheme': {
+      'type': 'object',
+      'properties': {
+        'navBarHeight': {'type': 'number', 'default': 82.0},
+        'navBarIconSize': {'type': 'number', 'default': 48.0},
+        'navBarSpacing': {'type': 'number', 'default': 16.0},
+        'iconColour': {r'$ref': r'#/$defs/Color'},
       },
     },
   },

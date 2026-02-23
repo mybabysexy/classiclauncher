@@ -1,0 +1,80 @@
+{
+    "longPressActionDuration": 800000,
+    "appGridTheme": {
+        "columns": 5,
+        "rows": 3,
+        "iconSize": 68.0,
+        "appCardFontSize": 18.0,
+        "appCardTextOutlineColour": "RGBA#6e1a3466",
+        "appGridOutterPadding": {
+            "left": 24.0,
+            "top": 0.0,
+            "right": 24.0,
+            "bottom": 12.0
+        },
+        "appCardIconPadding": {
+            "left": 8.0,
+            "top": 8.0,
+            "right": 8.0,
+            "bottom": 20.0
+        },
+        "columnSpacing": 10.0,
+        "rowSpacing": 10.0,
+        "appGridEdgeHoverZoneWidth": 70.0,
+        "appGridEdgeHoverDuration": 2500000,
+        "appCardBackgroundColour": null,
+        "cornerRadius": 18.0,
+        "selectorTheme": {
+            "selectorBackgroundColour": "RGBA#f4a7c080",
+            "selectorBorderColour": "RGBA#e0608cb3",
+            "selectorBorderRadius": 18.0
+        },
+        "appCardGradient": {
+            "type": "linear",
+            "begin": {
+                "x": 0.0,
+                "y": -1.0
+            },
+            "end": {
+                "x": 0.0,
+                "y": 1.0
+            },
+            "colours": [
+                "RGBA#fde8ef26",
+                "RGBA#f4a7c04d"
+            ],
+            "tileMode": "clamp"
+        },
+        "appCardTextColour": "RGBA#fde8efff"
+    },
+    "pageIndicatorTheme": {
+        "pageIndicatorInactiveSize": 12.0,
+        "pageIndicatorActiveSize": 22.0,
+        "pageIndicatorSpacing": 28.0,
+        "pageIndicatorFontSize": 14.0,
+        "pageIndicatorTextColour": "RGBA#5c1028ff",
+        "indicatorShape": "circle",
+        "pageIndicatorColour": "RGBA#e0608ccc"
+    },
+    "settingsTheme": {
+        "menuItemTitleFontSize": 28.0,
+        "menuItemBodyFontSize": 22.0,
+        "menuItemBorderColour": "RGBA#f4a7c0ff",
+        "menuItemTitleTextColour": "RGBA#5c1028ff",
+        "menuItemBodyTextColour": "RGBA#7a2040dd",
+        "menuItemTitleSelectedTextColour": "RGBA#ffffffff",
+        "menuItemBodySelectedTextColour": "RGBA#ffe4ecb3",
+        "backgroundColour": "RGBA#fff0f4ff",
+        "selectorTheme": {
+            "selectorBackgroundColour": "RGBA#f4a7c080",
+            "selectorBorderColour": "RGBA#e0608cb3",
+            "selectorBorderRadius": 0.0
+        }
+    },
+    "navBarTheme": {
+        "navBarHeight": 82.0,
+        "navBarIconSize": 48.0,
+        "navBarSpacing": 16.0,
+        "iconColour": "RGBA#e0608cff"
+    }
+}

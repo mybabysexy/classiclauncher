@@ -21,6 +21,8 @@ abstract class _$PageIndicatorThemeCWProxy {
 
   PageIndicatorTheme indicatorShape(IndicatorShape indicatorShape);
 
+  PageIndicatorTheme pageIndicatorColour(Color pageIndicatorColour);
+
   /// Creates a new instance with the provided field values.
   /// Passing `null` to a nullable field nullifies it, while `null` for a non-nullable field is ignored. To update a single field use `PageIndicatorTheme(...).copyWith.fieldName(value)`.
   ///
@@ -35,6 +37,7 @@ abstract class _$PageIndicatorThemeCWProxy {
     double pageIndicatorFontSize,
     Color pageIndicatorTextColour,
     IndicatorShape indicatorShape,
+    Color pageIndicatorColour,
   });
 }
 
@@ -71,6 +74,10 @@ class _$PageIndicatorThemeCWProxyImpl implements _$PageIndicatorThemeCWProxy {
       call(indicatorShape: indicatorShape);
 
   @override
+  PageIndicatorTheme pageIndicatorColour(Color pageIndicatorColour) =>
+      call(pageIndicatorColour: pageIndicatorColour);
+
+  @override
   /// Creates a new instance with the provided field values.
   /// Passing `null` to a nullable field nullifies it, while `null` for a non-nullable field is ignored. To update a single field use `PageIndicatorTheme(...).copyWith.fieldName(value)`.
   ///
@@ -85,6 +92,7 @@ class _$PageIndicatorThemeCWProxyImpl implements _$PageIndicatorThemeCWProxy {
     Object? pageIndicatorFontSize = const $CopyWithPlaceholder(),
     Object? pageIndicatorTextColour = const $CopyWithPlaceholder(),
     Object? indicatorShape = const $CopyWithPlaceholder(),
+    Object? pageIndicatorColour = const $CopyWithPlaceholder(),
   }) {
     return PageIndicatorTheme(
       pageIndicatorInactiveSize:
@@ -123,6 +131,12 @@ class _$PageIndicatorThemeCWProxyImpl implements _$PageIndicatorThemeCWProxy {
           ? _value.indicatorShape
           // ignore: cast_nullable_to_non_nullable
           : indicatorShape as IndicatorShape,
+      pageIndicatorColour:
+          pageIndicatorColour == const $CopyWithPlaceholder() ||
+              pageIndicatorColour == null
+          ? _value.pageIndicatorColour
+          // ignore: cast_nullable_to_non_nullable
+          : pageIndicatorColour as Color,
     );
   }
 }
@@ -139,28 +153,29 @@ extension $PageIndicatorThemeCopyWith on PageIndicatorTheme {
 // JsonSerializableGenerator
 // **************************************************************************
 
-PageIndicatorTheme _$PageIndicatorThemeFromJson(Map<String, dynamic> json) =>
-    PageIndicatorTheme(
-      pageIndicatorInactiveSize:
-          (json['pageIndicatorInactiveSize'] as num?)?.toDouble() ?? 12,
-      pageIndicatorActiveSize:
-          (json['pageIndicatorActiveSize'] as num?)?.toDouble() ?? 22,
-      pageIndicatorSpacing:
-          (json['pageIndicatorSpacing'] as num?)?.toDouble() ?? 28,
-      pageIndicatorFontSize:
-          (json['pageIndicatorFontSize'] as num?)?.toDouble() ?? 14,
-      pageIndicatorTextColour: json['pageIndicatorTextColour'] == null
-          ? Colors.black
-          : const ColourConverter().fromJson(
-              json['pageIndicatorTextColour'] as String,
-            ),
-      indicatorShape:
-          $enumDecodeNullable(
-            _$IndicatorShapeEnumMap,
-            json['indicatorShape'],
-          ) ??
-          IndicatorShape.circle,
-    );
+PageIndicatorTheme _$PageIndicatorThemeFromJson(
+  Map<String, dynamic> json,
+) => PageIndicatorTheme(
+  pageIndicatorInactiveSize:
+      (json['pageIndicatorInactiveSize'] as num?)?.toDouble() ?? 12,
+  pageIndicatorActiveSize:
+      (json['pageIndicatorActiveSize'] as num?)?.toDouble() ?? 22,
+  pageIndicatorSpacing:
+      (json['pageIndicatorSpacing'] as num?)?.toDouble() ?? 28,
+  pageIndicatorFontSize:
+      (json['pageIndicatorFontSize'] as num?)?.toDouble() ?? 14,
+  pageIndicatorTextColour: json['pageIndicatorTextColour'] == null
+      ? Colors.black
+      : const ColourConverter().fromJson(
+          json['pageIndicatorTextColour'] as String,
+        ),
+  indicatorShape:
+      $enumDecodeNullable(_$IndicatorShapeEnumMap, json['indicatorShape']) ??
+      IndicatorShape.circle,
+  pageIndicatorColour: json['pageIndicatorColour'] == null
+      ? const Color(0xFFe6e6e6)
+      : const ColourConverter().fromJson(json['pageIndicatorColour'] as String),
+);
 
 Map<String, dynamic> _$PageIndicatorThemeToJson(PageIndicatorTheme instance) =>
     <String, dynamic>{
@@ -172,6 +187,9 @@ Map<String, dynamic> _$PageIndicatorThemeToJson(PageIndicatorTheme instance) =>
         instance.pageIndicatorTextColour,
       ),
       'indicatorShape': _$IndicatorShapeEnumMap[instance.indicatorShape]!,
+      'pageIndicatorColour': const ColourConverter().toJson(
+        instance.pageIndicatorColour,
+      ),
     };
 
 const _$PageIndicatorThemeJsonSchema = {
@@ -184,6 +202,7 @@ const _$PageIndicatorThemeJsonSchema = {
     'pageIndicatorFontSize': {'type': 'number', 'default': 14.0},
     'pageIndicatorTextColour': {r'$ref': r'#/$defs/Color'},
     'indicatorShape': {'type': 'object'},
+    'pageIndicatorColour': {r'$ref': r'#/$defs/Color'},
   },
   r'$defs': {
     'Color': {

@@ -1,0 +1,65 @@
+{
+    "longPressActionDuration": 800000,
+    "appGridTheme": {
+        "columns": 5,
+        "rows": 3,
+        "iconSize": 68.0,
+        "appCardFontSize": 18.0,
+        "appCardTextOutlineColour": "RGBA#000000ff",
+        "appGridOutterPadding": {
+            "left": 24.0,
+            "top": 0.0,
+            "right": 24.0,
+            "bottom": 12.0
+        },
+        "appCardIconPadding": {
+            "left": 8.0,
+            "top": 8.0,
+            "right": 8.0,
+            "bottom": 20.0
+        },
+        "columnSpacing": 10.0,
+        "rowSpacing": 10.0,
+        "appGridEdgeHoverZoneWidth": 70.0,
+        "appGridEdgeHoverDuration": 2500000,
+        "appCardBackgroundColour": null,
+        "cornerRadius": 0.0,
+        "selectorTheme": {
+            "selectorBackgroundColour": "RGBA#42a7cfbe",
+            "selectorBorderColour": "RGBA#70b9d694",
+            "selectorBorderRadius": 0.0
+        },
+        "appCardGradient": null,
+        "appCardTextColour": "RGBA#e6e6e6ff"
+    },
+    "pageIndicatorTheme": {
+        "pageIndicatorInactiveSize": 12.0,
+        "pageIndicatorActiveSize": 22.0,
+        "pageIndicatorSpacing": 28.0,
+        "pageIndicatorFontSize": 14.0,
+        "pageIndicatorTextColour": "RGBA#000000ff",
+        "indicatorShape": "circle",
+        "pageIndicatorColour": "RGBA#e6e6e6ff"
+    },
+    "settingsTheme": {
+        "menuItemTitleFontSize": 28.0,
+        "menuItemBodyFontSize": 22.0,
+        "menuItemBorderColour": "RGBA#9e9e9eff",
+        "menuItemTitleTextColour": "RGBA#000000ff",
+        "menuItemBodyTextColour": "RGBA#000000dd",
+        "menuItemTitleSelectedTextColour": "RGBA#ffffffff",
+        "menuItemBodySelectedTextColour": "RGBA#ffffffb3",
+        "backgroundColour": "RGBA#ffffffff",
+        "selectorTheme": {
+            "selectorBackgroundColour": "RGBA#42a7cfbe",
+            "selectorBorderColour": "RGBA#70b9d694",
+            "selectorBorderRadius": 0.0
+        }
+    },
+    "navBarTheme": {
+        "navBarHeight": 82.0,
+        "navBarIconSize": 48.0,
+        "navBarSpacing": 16.0,
+        "iconColour": "RGBA#e6e6e6ff"
+    }
+}

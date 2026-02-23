@@ -18,9 +18,9 @@ class ThemeHandler extends GetxController {
 
   @override
   void onInit() {
-    //LauncherTheme launcherTheme = LauncherTheme();
+    LauncherTheme launcherTheme = LauncherTheme();
     //q10 theme
-    /*theme.value = LauncherTheme().copyWith(
+    theme.value = LauncherTheme().copyWith(
       pageIndicatorTheme: launcherTheme.pageIndicatorTheme.copyWith(
         indicatorShape: IndicatorShape.squircle,
         pageIndicatorActiveSize: 22,
@@ -36,9 +36,9 @@ class ThemeHandler extends GetxController {
         appCardGradient: LinearGradient(colors: [Colors.black12, Colors.black54], begin: AlignmentGeometry.topCenter, end: AlignmentGeometry.bottomCenter),
         cornerRadius: 12,
       ),
-    );*/
+    );
     super.onInit();
-    loadThemeFromStorage();
+    //  loadThemeFromStorage();
   }
 
   void loadThemeFromStorage() async {
@@ -104,7 +104,7 @@ class ThemeHandler extends GetxController {
 
       Get.snackbar("Theme imported ( Ո‿Ո)", "theme has been imported and stored", backgroundColor: Colors.black54, colorText: Colors.white);
     } catch (e, stackTrace) {
-      print("Failed to export theme $e,$stackTrace");
+      print("Failed to import theme $e,$stackTrace");
       Get.snackbar("Failed to import theme ૮(˶ㅠ︿ㅠ)ა", "$e", backgroundColor: Colors.black54, colorText: Colors.white);
     }
   }
@@ -117,7 +117,7 @@ class ThemeHandler extends GetxController {
 
       Get.snackbar("Theme cleared ( Ո‿Ո)", "theme has been reset to default", backgroundColor: Colors.black54, colorText: Colors.white);
     } catch (e, stackTrace) {
-      print("Failed to export theme $e,$stackTrace");
+      print("Failed to reset theme $e,$stackTrace");
       Get.snackbar("Failed to reset theme ૮(˶ㅠ︿ㅠ)ა", "$e", backgroundColor: Colors.black54, colorText: Colors.white);
     }
   }

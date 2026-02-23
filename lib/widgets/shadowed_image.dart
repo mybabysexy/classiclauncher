@@ -8,7 +8,8 @@ class ShadowedImage extends StatefulWidget {
   final double height;
   final Uint8List? imageBytes;
   final String? assetPath;
-  const ShadowedImage({super.key, required this.width, required this.height, this.imageBytes, this.assetPath});
+  final Color? colour;
+  const ShadowedImage({super.key, required this.width, required this.height, this.imageBytes, this.assetPath, this.colour});
 
   @override
   State<ShadowedImage> createState() => _ShadowedImageState();
@@ -48,8 +49,8 @@ class _ShadowedImageState extends State<ShadowedImage> {
             height: widget.height - 4,
             width: widget.width - 4,
             child: widget.imageBytes == null
-                ? Image(image: AssetImage(widget.assetPath!), fit: BoxFit.contain, gaplessPlayback: true)
-                : Image.memory(widget.imageBytes!, fit: BoxFit.contain, gaplessPlayback: true),
+                ? Image(image: AssetImage(widget.assetPath!), fit: BoxFit.contain, gaplessPlayback: true, color: widget.colour)
+                : Image.memory(widget.imageBytes!, fit: BoxFit.contain, gaplessPlayback: true, color: widget.colour),
           ),
         ],
       ),

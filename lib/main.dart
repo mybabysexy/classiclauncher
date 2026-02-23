@@ -12,6 +12,7 @@ import 'package:classiclauncher/widgets/selectable/app_grid.dart';
 import 'package:classiclauncher/widgets/selectable/selectable_list.dart';
 import 'package:classiclauncher/widgets/shadowed_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' hide Selectable;
 import 'package:get/get.dart';
 
 void main() {
@@ -20,7 +21,6 @@ void main() {
   Get.put(AppHandler(), permanent: true);
   Get.put(ThemeHandler(), permanent: true);
   Get.put(AppGridHandler(), permanent: true);
-
   runApp(const MyApp());
 }
 
@@ -75,7 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
               SizedBox(
-                height: themeHandler.theme.value.navBarHeight,
+                height: themeHandler.theme.value.navBarTheme.navBarHeight,
                 child: Selectable(
                   controller: controller,
                   child: SelectableList.builder(
@@ -87,7 +87,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       switch (index) {
                         case 0:
                           return Padding(
-                            padding: EdgeInsetsGeometry.only(left: themeHandler.theme.value.navBarSpacing, right: themeHandler.theme.value.navBarSpacing),
+                            padding: EdgeInsetsGeometry.only(
+                              left: themeHandler.theme.value.navBarTheme.navBarSpacing,
+                              right: themeHandler.theme.value.navBarTheme.navBarSpacing,
+                            ),
                             child: SelectableContainer(
                               selectableKey: "${key}_$index",
                               selectorTheme: themeHandler.theme.value.appGridTheme.selectorTheme,
@@ -95,11 +98,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                 appHandler.launchMail();
                               },
                               child: SizedBox(
-                                height: themeHandler.theme.value.navBarHeight,
-                                width: themeHandler.theme.value.navBarHeight,
+                                height: themeHandler.theme.value.navBarTheme.navBarHeight,
+                                width: themeHandler.theme.value.navBarTheme.navBarHeight,
                                 child: ShadowedImage(
-                                  width: themeHandler.theme.value.navBarIconSize,
-                                  height: themeHandler.theme.value.navBarIconSize,
+                                  width: themeHandler.theme.value.navBarTheme.navBarIconSize,
+                                  height: themeHandler.theme.value.navBarTheme.navBarIconSize,
+                                  colour: themeHandler.theme.value.navBarTheme.iconColour,
                                   assetPath: appHandler.loliSnatcher.value == null ? iconMessages : iconKanna2,
                                 ),
                               ),
@@ -111,7 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               selectableKey: "${key}_$index",
                               selectorTheme: themeHandler.theme.value.appGridTheme.selectorTheme,
                               child: SizedBox(
-                                height: themeHandler.theme.value.navBarHeight,
+                                height: themeHandler.theme.value.navBarTheme.navBarHeight,
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -131,7 +135,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
                         case 2:
                           return Padding(
-                            padding: EdgeInsetsGeometry.only(left: themeHandler.theme.value.navBarSpacing, right: themeHandler.theme.value.navBarSpacing),
+                            padding: EdgeInsetsGeometry.only(
+                              left: themeHandler.theme.value.navBarTheme.navBarSpacing,
+                              right: themeHandler.theme.value.navBarTheme.navBarSpacing,
+                            ),
                             child: SelectableContainer(
                               selectableKey: "${key}_$index",
                               selectorTheme: themeHandler.theme.value.appGridTheme.selectorTheme,
@@ -139,11 +146,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                 appHandler.launchCamera();
                               },
                               child: SizedBox(
-                                height: themeHandler.theme.value.navBarHeight,
-                                width: themeHandler.theme.value.navBarHeight,
+                                height: themeHandler.theme.value.navBarTheme.navBarHeight,
+                                width: themeHandler.theme.value.navBarTheme.navBarHeight,
                                 child: ShadowedImage(
-                                  width: themeHandler.theme.value.navBarIconSize,
-                                  height: themeHandler.theme.value.navBarIconSize,
+                                  width: themeHandler.theme.value.navBarTheme.navBarIconSize,
+                                  height: themeHandler.theme.value.navBarTheme.navBarIconSize,
+                                  colour: themeHandler.theme.value.navBarTheme.iconColour,
                                   assetPath: iconCamera,
                                 ),
                               ),

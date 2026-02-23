@@ -25,9 +25,7 @@ class _PageIndicatorsState extends State<PageIndicators> {
     widget.selected.addListener(() {
       if (widget.selected.value != selected) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) {
-            return;
-          }
+          if (!mounted) return;
           setState(() {
             selected = widget.selected.value;
           });
@@ -39,12 +37,16 @@ class _PageIndicatorsState extends State<PageIndicators> {
 
   @override
   Widget build(BuildContext context) {
+    int maxDots = 5;
+    int dotCount = widget.pageCount.clamp(0, maxDots);
+    int activeDot = selected % maxDots;
+
     return Row(
       children: [
-        for (int i = 0; i < widget.pageCount; i++)
+        for (int i = 0; i < dotCount; i++)
           Padding(
-            padding: EdgeInsets.only(right: i == widget.pageCount - 1 ? 0 : themeHandler.theme.value.pageIndicatorTheme.pageIndicatorSpacing),
-            child: PageIndicator(key: ValueKey("PageIndicators::$i"), pageNumber: i, selected: i == selected),
+            padding: EdgeInsets.only(right: i == dotCount - 1 ? 0 : themeHandler.theme.value.pageIndicatorTheme.pageIndicatorSpacing),
+            child: PageIndicator(key: ValueKey("PageIndicators::$i"), pageNumber: i == activeDot ? selected : i, selected: i == activeDot),
           ),
       ],
     );
@@ -62,6 +64,7 @@ class PageIndicator extends StatefulWidget {
 
 class _PageIndicatorState extends State<PageIndicator> {
   ThemeHandler themeHandler = Get.find<ThemeHandler>();
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -78,30 +81,23 @@ class _PageIndicatorState extends State<PageIndicator> {
               height: widget.selected
                   ? themeHandler.theme.value.pageIndicatorTheme.pageIndicatorActiveSize
                   : themeHandler.theme.value.pageIndicatorTheme.pageIndicatorInactiveSize,
-
               key: ValueKey("PageIndicator::AnimatedContainer::${widget.pageNumber}"),
               decoration: themeHandler.theme.value.pageIndicatorTheme.indicatorShape == IndicatorShape.squircle
                   ? ShapeDecoration(
-                      color: themeHandler.theme.value.uiPrimaryColour,
+                      color: themeHandler.theme.value.pageIndicatorTheme.pageIndicatorColour,
                       shadows: [BoxShadow(color: Colors.black38, blurRadius: 5, offset: const Offset(0, 2))],
                       shape: ContinuousRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(
-                          color: Colors.black,
-                          width: 1, // 1px border
-                        ),
+                        side: const BorderSide(color: Colors.black, width: 1),
                       ),
                     )
                   : BoxDecoration(
-                      color: themeHandler.theme.value.uiPrimaryColour,
+                      color: themeHandler.theme.value.pageIndicatorTheme.pageIndicatorColour,
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.black,
-                        width: 1, // 1 logical pixel
-                      ),
+                      border: Border.all(color: Colors.black, width: 1),
                       boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 5, offset: const Offset(0, 2))],
                     ),
-              duration: Duration(milliseconds: 100),
+              duration: const Duration(milliseconds: 100),
             ),
           ),
           if (widget.selected)
