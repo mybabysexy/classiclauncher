@@ -72,7 +72,7 @@ class AppGridTheme extends Equatable {
       Shadow(offset: Offset(-0.5, 0.5), color: appCardTextOutlineColour),
       Shadow(blurRadius: 3, color: Colors.black, offset: Offset(0, 1.5)),
     ],
-    overflow: TextOverflow.clip,
+    overflow: TextOverflow.ellipsis,
   );
 
   @override

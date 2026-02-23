@@ -135,7 +135,7 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
                   imageBytes: widget.appInfo.icon,
                 ),
               ),
-              Text(widget.appInfo.title, textAlign: TextAlign.center, style: themeHandler.theme.value.appGridTheme.appCardTextStyle),
+              Text(widget.appInfo.title, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: themeHandler.theme.value.appGridTheme.appCardTextStyle),
             ],
           ),
         ),
@@ -196,7 +196,7 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
                           imageBytes: widget.appInfo.icon,
                         ),
                       ),
-                      Text(widget.appInfo.title, textAlign: TextAlign.center, style: themeHandler.theme.value.appGridTheme.appCardTextStyle),
+                      Text(widget.appInfo.title, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: themeHandler.theme.value.appGridTheme.appCardTextStyle),
                     ],
                   );
                 }),
