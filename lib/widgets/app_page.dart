@@ -72,7 +72,7 @@ class _AppPageState extends State<AppPage> {
       duration: duration,
       top: top,
       left: left,
-      child: AppCard(appInfo: app, width: boxWidth, height: boxHeight, selectableKey: widget.selectableKey),
+      child: AppCard(appInfo: app, width: boxWidth, height: boxHeight, selectableKey: widget.selectableKey, globalIndex: globalIndex),
     );
   }
 

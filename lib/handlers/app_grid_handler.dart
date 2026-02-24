@@ -11,6 +11,9 @@ class AppGridHandler extends GetxController with WidgetsBindingObserver {
   final Rx<AppInfo?> moving = Rx(null);
   final RxBool dragging = RxBool(false);
   final RxInt selectedGridIndex = 0.obs;
+  /// The app that should show the DPAD highlight. Set after a move resolves,
+  /// so it's always in sync with the actual list order.
+  final Rx<AppInfo?> highlightedApp = Rx(null);
   int? appMoveCol;
   int? appMoveRow;
   Rx<Timer?> pageChangeEdgeTimer = Rx(null);
@@ -53,6 +56,7 @@ class AppGridHandler extends GetxController with WidgetsBindingObserver {
   void stopDrag() {
     dragging.value = false;
     moving.value = null;
+    highlightedApp.value = null;
     fingerX.value = null;
     fingerY.value = null;
     appMoveCol = null;
@@ -63,6 +67,7 @@ class AppGridHandler extends GetxController with WidgetsBindingObserver {
     moving.value = null;
     dragging.value = false;
     editing.value = false;
+    highlightedApp.value = null;
     fingerX.value = null;
     fingerY.value = null;
     appMoveCol = null;

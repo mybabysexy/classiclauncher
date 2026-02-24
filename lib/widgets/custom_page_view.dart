@@ -164,27 +164,55 @@ class _CustomPageViewState extends State<CustomPageView> with SingleTickerProvid
         height: height,
         child: ClipRect(
           child: Stack(
-            children: [
-              for (int i = 0; i < _pageCount; i++)
-                _buildPage(i, (i - _offset) * width, width, height),
-            ],
+            children: _buildPages(width, height),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildPage(int index, double dx, double width, double height) {
-    // Distance from the current scroll position in page units (0 = centred, 1 = fully off-screen).
-    final double dist = (index - _offset).abs().clamp(0.0, 1.0);
-    // Fade: full opacity when centred, 0 when completely off-screen. Use a curve so the
-    // fade is most noticeable in the first half of the travel and subtle near centre.
-    final double opacity = (1.0 - Curves.easeIn.transform(dist)).clamp(0.0, 1.0);
+  /// Builds only the (at most 2) visible pages with the directional slide+fade effect:
+  /// - The leaving page stays fully opaque and slides out.
+  /// - The incoming page slides in from the edge and fades from 0→1.
+  List<Widget> _buildPages(double width, double height) {
+    final int basePage = _offset.floor().clamp(0, _pageCount - 1);
+    final double frac = _offset - basePage; // 0.0 → 1.0
 
+    final List<Widget> result = [];
+
+    for (int i = 0; i < _pageCount; i++) {
+      final double rawDist = i - _offset; // negative = left, positive = right
+      final double absDist = rawDist.abs();
+
+      // Skip pages completely off-screen.
+      if (absDist >= 1.0) continue;
+
+      if (i == basePage) {
+        // ── Leaving page: stays fully opaque, slides out in the swipe direction.
+        final double dx = -frac * width;
+        result.add(_buildPageWidget(i, dx, 1.0, width, height));
+      } else {
+        // ── Incoming page: slides in ahead of the swipe, overlapping the leaving page.
+        // dx = rawDist * width normally mirrors 1:1. We scale it down so the incoming page
+        // is already well into the screen early on (overlapping page 1 from the right).
+        // At frac=0.7 (absDist=0.3): dx = 0.3 * 0.5 * width = 0.15*width → 85% visible (heavy overlap).
+        // Scale of 0.5 means the incoming page travels at half the distance → always ahead.
+        final double dx = rawDist * width * 0.7;
+        // Opacity grows as the page approaches center using an easeIn curve.
+        final double opacityT = (1.0 - absDist).clamp(0.0, 1.0);
+        final double opacity = Curves.easeIn.transform(opacityT);
+        result.add(_buildPageWidget(i, dx, opacity, width, height));
+      }
+    }
+
+    return result;
+  }
+
+  Widget _buildPageWidget(int index, double dx, double opacity, double width, double height) {
     return Transform.translate(
       offset: Offset(dx, 0),
       child: Opacity(
-        opacity: opacity,
+        opacity: opacity.clamp(0.0, 1.0),
         child: SizedBox(width: width, height: height, child: _pages[index]),
       ),
     );

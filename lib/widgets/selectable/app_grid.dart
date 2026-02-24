@@ -74,10 +74,20 @@ class _AppGridState extends State<AppGrid> implements SelectableZone {
     int appCount = apps.length;
     int appsPerPage = themeHandler.theme.value.appGridTheme.appsPerPage;
     int maxPage = ((appCount / appsPerPage).ceil() - 1);
+    int currentPage = appGridHandler.pageNotifier.value;
+
+    // When moving an app via DPAD, always sync currentIndex to the app's actual
+    // position in the list — it shifts after every move.
+    if (appGridHandler.editing.value && appGridHandler.moving.value != null) {
+      final actualIndex = apps.indexOf(appGridHandler.moving.value!);
+      if (actualIndex != -1) {
+        currentIndex = actualIndex;
+      }
+    }
+
     int localIndex = currentIndex % appsPerPage;
     int currentRow = localIndex ~/ columns;
     int currentCol = localIndex % columns;
-    int currentPage = appGridHandler.pageNotifier.value;
     int indexPage = currentIndex ~/ appsPerPage;
 
     bool isTopEdge = currentRow == 0;
@@ -85,7 +95,7 @@ class _AppGridState extends State<AppGrid> implements SelectableZone {
     bool isLeftEdge = currentCol == 0;
     bool isRightEdge = currentCol == columns - 1;
 
-    bool editing = appHandler.editingApps.value;
+    bool editing = appGridHandler.editing.value;
 
     if (indexPage != currentPage) {
       int localIndex = currentIndex % appsPerPage;
@@ -107,6 +117,7 @@ class _AppGridState extends State<AppGrid> implements SelectableZone {
         }
 
         currentIndex -= columns;
+        break;
 
       case Direction.down:
 
@@ -127,6 +138,7 @@ class _AppGridState extends State<AppGrid> implements SelectableZone {
           return -1;
         }
         currentIndex = next;
+        break;
 
       case Direction.left:
         // return to controller to handle if at left side
@@ -134,8 +146,8 @@ class _AppGridState extends State<AppGrid> implements SelectableZone {
           return -1;
         }
 
-        // dont change page if soft
-        if (isLeftEdge && moveType == MoveType.soft) {
+        // dont change page if soft or editing
+        if (isLeftEdge && (moveType == MoveType.soft || editing)) {
           return currentIndex;
         }
 
@@ -147,15 +159,16 @@ class _AppGridState extends State<AppGrid> implements SelectableZone {
           break;
         }
         currentIndex--;
+        break;
 
       case Direction.right:
-        // return to controller to handle if at left side
+        // return to controller to handle if at right edge on last page
         if (isRightEdge && currentPage == maxPage) {
           return -1;
         }
 
-        // dont change page if soft
-        if (isRightEdge && moveType == MoveType.soft) {
+        // dont change page if soft or editing
+        if (isRightEdge && (moveType == MoveType.soft || editing)) {
           return currentIndex;
         }
 
@@ -172,12 +185,25 @@ class _AppGridState extends State<AppGrid> implements SelectableZone {
           return currentIndex;
         }
         currentIndex++;
+        break;
     }
 
     currentIndex = currentIndex.clamp(0, appCount - 1);
 
     if (appGridHandler.editing.value && appGridHandler.moving.value != null) {
-      appHandler.moveApp(appPosition: currentIndex, app: appGridHandler.moving.value!);
+      final appToMove = appGridHandler.moving.value!;
+      final targetIndex = currentIndex;
+      // Set immediately so the highlight moves optimistically while the async move runs.
+      appGridHandler.highlightedApp.value = appToMove;
+      appHandler.moveApp(appPosition: targetIndex, app: appToMove).then((_) {
+        // Re-sync currentIndex to the app's actual position after the list reorders.
+        final newIndex = appHandler.installedApps.indexOf(appToMove);
+        if (newIndex != -1) {
+          currentIndex = newIndex;
+        }
+        // Keep highlightedApp pointing at the same app — AppCard checks identity.
+        appGridHandler.highlightedApp.value = appToMove;
+      });
     }
 
     return currentIndex;
