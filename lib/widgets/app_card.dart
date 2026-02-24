@@ -146,75 +146,88 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
           final bool editing = appGridHandler.editing.value;
           final bool isSystem = widget.appInfo.packageName == "classiclauncher.internal.settings";
 
-          return Transform.scale(
-            scale: scaleAnimation.value,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  key: ValueKey("AppCard::${widget.appInfo.packageName}::${widget.width}::${widget.height}"),
-                  width: widget.width,
-                  height: widget.height,
-                  decoration: themeHandler.theme.value.appGridTheme.appCardDecoration,
-                  child: Obx(() {
-                    final bool? forced = appGridHandler.editing.value
-                        ? appGridHandler.highlightedApp.value == widget.appInfo
-                        : null;
-                    return SelectableContainer(
-                      selectableKey: "${widget.selectableKey}_${widget.globalIndex}",
-                      selectorTheme: themeHandler.theme.value.appGridTheme.selectorTheme,
-                      canLongPress: () => !appGridHandler.editing.value,
-                      onTapDown: (details) => setState(() => isFingerDown = true),
-                      onTapUp: (details) => setState(() => isFingerDown = false),
-                      onTap: () {
-                        if (appGridHandler.editing.value) {
-                          appHandler.uninstallApp(widget.appInfo);
-                          return;
-                        }
-                        appHandler.launchApp(widget.appInfo);
-                      },
-                      onLongPress: isFingerDown ? null : () => startEdit(false),
-                      forcedSelected: forced,
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Wobbling icon card
+              Transform.scale(
+                scale: scaleAnimation.value,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      key: ValueKey("AppCard::${widget.appInfo.packageName}::${widget.width}::${widget.height}"),
+                      width: widget.width,
+                      height: widget.height,
+                      decoration: themeHandler.theme.value.appGridTheme.appCardDecoration,
                       child: Obx(() {
-                        if (appGridHandler.moving.value == widget.appInfo && appGridHandler.editing.value && appGridHandler.dragging.value) {
-                          return SizedBox.shrink();
-                        }
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Padding(
-                              padding: themeHandler.theme.value.appGridTheme.appCardIconPadding,
-                              child: ShadowedImage(
-                                width: themeHandler.theme.value.appGridTheme.iconSize,
-                                height: themeHandler.theme.value.appGridTheme.iconSize,
-                                imageBytes: widget.appInfo.icon,
-                              ),
-                            ),
-                            Text(widget.appInfo.title, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: themeHandler.theme.value.appGridTheme.appCardTextStyle),
-                          ],
+                        final bool? forced = appGridHandler.editing.value
+                            ? appGridHandler.highlightedApp.value == widget.appInfo
+                            : null;
+                        return SelectableContainer(
+                          selectableKey: "${widget.selectableKey}_${widget.globalIndex}",
+                          selectorTheme: themeHandler.theme.value.appGridTheme.selectorTheme,
+                          canLongPress: () => !appGridHandler.editing.value,
+                          onTapDown: (details) => setState(() => isFingerDown = true),
+                          onTapUp: (details) => setState(() => isFingerDown = false),
+                          onTap: () {
+                            if (appGridHandler.editing.value) return;
+                            appHandler.launchApp(widget.appInfo);
+                          },
+                          onLongPress: isFingerDown ? null : () => startEdit(false),
+                          forcedSelected: forced,
+                          child: Obx(() {
+                            if (appGridHandler.moving.value == widget.appInfo && appGridHandler.editing.value && appGridHandler.dragging.value) {
+                              return SizedBox.shrink();
+                            }
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Padding(
+                                  padding: themeHandler.theme.value.appGridTheme.appCardIconPadding,
+                                  child: ShadowedImage(
+                                    width: themeHandler.theme.value.appGridTheme.iconSize,
+                                    height: themeHandler.theme.value.appGridTheme.iconSize,
+                                    imageBytes: widget.appInfo.icon,
+                                  ),
+                                ),
+                                Text(widget.appInfo.title, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis, style: themeHandler.theme.value.appGridTheme.appCardTextStyle),
+                              ],
+                            );
+                          }),
                         );
                       }),
-                    );
-                  }),
-                ),
-                // Uninstall button — outside the clipped Container so it renders over the corner
-                if (editing && !isSystem)
-                  Positioned(
-                    top: -4,
-                    left: -4,
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
-                      ),
-                      child: const Icon(Icons.close, color: Colors.white, size: 13),
                     ),
+                    // Uninstall button — inside Transform.scale so it sticks to the icon corner
+                    if (editing && !isSystem)
+                      Positioned(
+                        top: -12,
+                        left: -12,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => appHandler.uninstallApp(widget.appInfo),
+                          child: SizedBox(
+                            width: 50,
+                            height: 50,
+                            child: Center(
+                              child: Container(
+                                width: 26,
+                                height: 26,
+                                decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 1.5),
+                                ),
+                                child: const Icon(Icons.close, color: Colors.white, size: 15),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-              ],
-            ),
+                ),
+            ],
           );
         },
       ),
